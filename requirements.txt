@@ -1,0 +1,65 @@
+# =============================================================================
+# Face Attendance System - Complete Dependencies
+# =============================================================================
+# This file includes ALL dependencies for development and model training.
+# For deployment only (Docker/Pi), use requirements-docker.txt instead.
+
+# =============================================================================
+# Core Runtime Dependencies (Required for inference)
+# =============================================================================
+
+# Computer Vision
+opencv-python>=4.8.0,<5.0.0
+
+# Numerical Computing
+numpy>=1.24.0,<2.0.0
+scipy>=1.10.0,<2.0.0
+
+# Configuration
+pyyaml>=6.0
+
+# TFLite Runtime (lightweight inference)
+# Note: Install from Google Coral repository for best compatibility
+# pip install --extra-index-url https://google-coral.github.io/py-repo/ tflite-runtime
+tflite-runtime>=2.14.0; platform_machine != "x86_64"
+
+# TensorFlow (fallback if tflite-runtime not available)
+# Uncomment if you prefer full TensorFlow instead of tflite-runtime
+# tensorflow>=2.15.0,<3.0.0
+
+# =============================================================================
+# Model Training & Export Dependencies (Optional - for development only)
+# =============================================================================
+
+# YOLO Training Framework
+ultralytics>=8.0.0,<9.0.0
+
+# Deep Learning
+torch>=2.0.0,<3.0.0
+torchvision>=0.15.0,<1.0.0
+
+# Model Conversion
+onnx>=1.14.0,<2.0.0
+onnx2tf>=1.20.0,<2.0.0
+onnxruntime>=1.16.0,<2.0.0
+
+# =============================================================================
+# Development & Utilities (Optional)
+# =============================================================================
+
+# Progress bars
+tqdm>=4.65.0
+
+# Plotting (for analysis)
+matplotlib>=3.7.0
+
+# Data manipulation (for dataset processing)
+pandas>=2.0.0
+
+# =============================================================================
+# Notes:
+# =============================================================================
+# - CUDA packages (nvidia-*) are NOT included - they're installed via PyTorch
+# - For Raspberry Pi deployment, use requirements-docker.txt (minimal)
+# - For quick setup, run: ./setup_venv.sh (auto-detects platform)
+# - Version ranges allow flexibility while ensuring compatibility

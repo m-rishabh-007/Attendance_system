@@ -1,0 +1,63 @@
+# .dockerignore
+# Files and directories to exclude from Docker builds
+# Reduces image size and build time
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Datasets (already cleaned up)
+datasets/
+calibration_dataset/
+*_calibration/
+*.npy
+
+# Documentation and development files
+docs/
+*.md
+!README.md
+!ARCHITECTURE.md
+.github/
+.git/
+.gitignore
+
+# Model training artifacts
+*.pt
+*.onnx
+models/*/tflite_saved_models/
+models/*/.cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scripts not needed in container
+setup_venv.sh
+cleanup.sh
+*.sh
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Logs and temporary files
+*.log
+logs/
+tmp/

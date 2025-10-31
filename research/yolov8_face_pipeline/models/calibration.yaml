@@ -1,0 +1,17 @@
+# calibration.yaml
+# Configuration for model calibration during INT8 quantization
+# This file is used during model export only (not during inference)
+# NOTE: The calibration_dataset no longer exists after cleanup
+
+# Base path to calibration dataset (relative to this file)
+# This path is historical and only needed if re-exporting the model
+path: ../calibration_dataset
+
+# Subdirectories for training and validation images
+train: images
+val: images
+
+# Class names for the detection model
+# Single-class model: only detects faces
+names:
+  0: face

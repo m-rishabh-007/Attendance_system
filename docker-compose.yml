@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Face detection and tracking service
+  face-attendance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    container_name: face-attendance-system
+    
+    # Restart policy for production deployment
+    restart: unless-stopped
+    
+    # Device access for camera
+    devices:
+      - /dev/video0:/dev/video0  # Default camera (adjust if needed)
+    
+    # Privileged mode for full device access (use with caution)
+    # privileged: true
+    
+    # Environment variables
+    environment:
+      # Display for GUI (if using X11 forwarding)
+      - DISPLAY=${DISPLAY:-:0}
+      
+      # Camera configuration
+      - CAMERA_ID=0
+      
+      # Performance tuning
+      - NUM_THREADS=3
+      - PROCESS_EVERY_N_FRAMES=1
+    
+    # Volume mounts
+    volumes:
+      # X11 socket for GUI display (if needed)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      
+      # Mount config for easy modification without rebuild
+      - ./yolov8_face_pipeline/pipeline_config.yaml:/app/yolov8_face_pipeline/pipeline_config.yaml:ro
+      
+      # Optional: Mount for saving attendance logs (future feature)
+      # - ./logs:/app/logs
+    
+    # Network configuration (for future API server)
+    # ports:
+    #   - "8000:8000"
+    
+    # Resource limits (important for Raspberry Pi)
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'      # Limit to 3 CPU cores
+          memory: 2G       # Limit to 2GB RAM
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Optional: Add a database service for storing attendance records
+# services:
+#   database:
+#     image: postgres:14-alpine
+#     environment:
+#       POSTGRES_DB: attendance
+#       POSTGRES_USER: attendance
+#       POSTGRES_PASSWORD: secure_password
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:

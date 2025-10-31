@@ -1,0 +1,21 @@
+# requirements-docker.txt
+# Minimal dependencies for Docker deployment
+# Optimized for Raspberry Pi (ARM architecture)
+
+# Core numerical libraries
+numpy>=1.24.0,<2.0.0
+scipy>=1.10.0
+
+# Computer vision
+opencv-python-headless>=4.8.0  # Headless version (no GUI, smaller image)
+
+# YAML configuration
+pyyaml>=6.0
+
+# TFLite Runtime (lightweight inference)
+# Install from Google's Coral repository for ARM compatibility
+--extra-index-url https://google-coral.github.io/py-repo/
+tflite-runtime>=2.14.0
+
+# Note: For development with model training/export, use requirements.txt instead
+# which includes ultralytics, torch, and other heavy dependencies

@@ -1,0 +1,87 @@
+# pipeline_config.yaml
+# Master configuration for the Face Attendance System
+# All paths are relative to the project root directory
+
+# --- Model Configuration ---
+tflite_model:
+  # Path to the TFLite INT8 quantized model (relative to yolov8_face_pipeline directory)
+  # This model performs face detection with optimized inference speed
+  path: "../models/yolov8n_face_int8.tflite"
+  description: "YOLOv8n TFLite INT8 model for high-performance detection."
+
+# --- Inference Logic Settings ---
+inference_settings:
+  # Input image size for the model (will be resized to this)
+  # IMPORTANT: This model was trained with 256x256 - using other sizes will break detection!
+  # DO NOT change this value unless you retrain the model
+  input_size: 256
+  
+  # Minimum confidence threshold for detections (0.0 - 1.0)
+  # Higher = fewer false positives, but may miss some faces
+  # Lowered to 0.5 to catch more detections during fast motion
+  confidence_threshold: 0.5
+  
+  # IoU (Intersection over Union) threshold for NMS (Non-Maximum Suppression)
+  # Higher = more aggressive filtering of overlapping boxes
+  # Matched to attendance_system.py for consistency
+  iou_threshold: 0.3
+
+# --- Runtime Performance Settings ---
+runtime_settings:
+  # Number of CPU threads for TFLite inference
+  # Recommended: 3 for Raspberry Pi 4, 4 for laptops/desktops
+  num_threads: 3
+  
+  # Process every Nth frame (1 = process all frames, 2 = skip every other frame)
+  # Increase to improve FPS at cost of tracking smoothness
+  process_every_n_frames: 1
+  
+  # Desired input size before inference (overrides inference_settings.input_size if set)
+  # Use smaller value (e.g., 320) for faster inference on resource-constrained devices
+  # IMPORTANT: This model was trained with 256x256 input - DO NOT CHANGE!
+  desired_input: 256
+
+# --- ByteTrack Configuration ---
+tracking_settings:
+  # Minimum confidence score to initialize a new track
+  # Lower than confidence_threshold to allow tracking of slightly lower conf detections
+  track_thresh: 0.4
+  
+  # Number of frames to keep "lost" tracks alive before deletion
+  # Higher = more persistent tracking through occlusions
+  # Increased to 90 frames (~3 seconds at 30fps) to maintain IDs during head shaking
+  track_buffer: 90
+  
+  # IoU threshold for matching detections to existing tracks
+  # Lower = more lenient matching (better persistent IDs across frames)
+  # Lowered to 0.4 for more aggressive re-identification
+  match_thresh: 0.4
+  
+  # Expected camera frame rate (used for motion prediction)
+  frame_rate: 30
+
+# --- Deployment Settings ---
+deployment_config:
+  # Camera device index (0 for default camera, 1 for secondary, etc.)
+  # For Raspberry Pi Camera Module, this is typically 0
+  # For USB webcams, try 0, 1, 2... until you find the right device
+  camera_settings:
+  camera_id: 1               # Use camera ID 1
+  
+  # TFLite delegate for hardware acceleration (optional)
+  # Options:
+  #   null - CPU only (default, most compatible)
+  #   "xnnpack" - XNNPACK delegate for CPU optimization (recommended for Pi)
+  #   "edgetpu" - Coral Edge TPU acceleration (requires Edge TPU device)
+  delegate: null
+  
+  # Display window settings
+  display:
+    # Show live video feed with annotations
+    show_window: true
+    
+    # Window title
+    window_name: "Face Detection & Tracking"
+    
+    # Display FPS counter on video
+    show_fps: true

@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Datasets and calibration (already cleaned up)
+datasets/
+calibration_dataset/
+*_calibration/
+*.npy
+
+# Model training artifacts
+*.pt
+*.onnx
+models/*/tflite_saved_models/
+models/*/.cache/
+*.pb
+saved_model/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Docker volumes
+postgres_data/
