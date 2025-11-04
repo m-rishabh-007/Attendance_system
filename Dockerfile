@@ -10,8 +10,9 @@ FROM python:3.9-slim-bullseye
 
 # Set metadata
 LABEL maintainer="your-email@example.com"
-LABEL description="Face Detection and Tracking System with YOLOv8n TFLite and ByteTrack"
-LABEL version="1.0"
+LABEL description="Face Attendance System - V3 HYBRID Architecture with YOLOv8n TFLite and BoT-SORT"
+LABEL version="3.0"
+LABEL architecture="V3 HYBRID - Pipeline Orchestration + Design Patterns"
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -43,12 +44,25 @@ COPY requirements-docker.txt .
 # Use pip with no cache to reduce image size
 RUN pip install --no-cache-dir -r requirements-docker.txt
 
-# Copy application code
+# Copy application code (V3 HYBRID structure)
 COPY models/ ./models/
-COPY yolov8_face_pipeline/ ./yolov8_face_pipeline/
+COPY pipeline/ ./pipeline/
+COPY detectors/ ./detectors/
+COPY tracking/ ./tracking/
+COPY common/ ./common/
+COPY aligners/ ./aligners/
+COPY recognizers/ ./recognizers/
+COPY database/ ./database/
+COPY server/ ./server/
+COPY tests/ ./tests/
 COPY attendance_system.py .
+COPY config.yaml .
 COPY ARCHITECTURE.md .
 COPY README.md .
+COPY docs/ ./docs/
+
+# Create logs directory
+RUN mkdir -p logs
 
 # Create a non-root user for security
 RUN useradd -m -u 1000 attendance && \
@@ -57,16 +71,16 @@ RUN useradd -m -u 1000 attendance && \
 # Switch to non-root user
 USER attendance
 
-# Expose any ports if needed (for future API)
+# Expose ports for future API server
 # EXPOSE 8000
 
-# Set working directory to pipeline
-WORKDIR $APP_HOME/yolov8_face_pipeline
+# Set working directory to app root
+WORKDIR $APP_HOME
 
-# Health check (optional - checks if main script exists)
+# Health check (checks if main script exists)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import os; exit(0 if os.path.exists('pipeline_main.py') else 1)"
+    CMD python -c "import os; exit(0 if os.path.exists('attendance_system.py') else 1)"
 
-# Default command: run the production pipeline
-# Override with: docker run ... python ../attendance_system.py
-CMD ["python", "pipeline_main.py"]
+# Default command: run the V3 HYBRID attendance system
+# Override with: docker run ... python -c "your custom command"
+CMD ["python", "attendance_system.py"]

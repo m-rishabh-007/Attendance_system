@@ -4,6 +4,41 @@ This directory contains historical references and documentation for model creati
 
 ## Files
 
+### `ARCHITECTURE_V3_HYBRID.md` ⭐
+**Purpose**: Complete V3 HYBRID architecture documentation (651 lines)
+
+**Contents**:
+- V3 HYBRID design philosophy (perfect 25/25 score)
+- Complete folder structure and data flow
+- All 4 design patterns explained
+- Code examples for each component
+- How to add new stages (alignment, recognition, attendance, API)
+- 9-week migration plan
+- Scoring comparison with previous architectures
+
+**When to read**:
+- Understanding the complete system architecture
+- Adding new features (alignment, recognition, etc.)
+- Learning about design patterns in practice
+- Planning development work
+
+### `ARCHITECTURE_V2.md`
+**Purpose**: Previous V2 architecture documentation (historical reference)
+
+**Contents**:
+- OOP design patterns (Singleton, Factory, Strategy, Observer)
+- v2.0 architecture explanation
+- Why it was superseded by V3 HYBRID
+
+### `QUICKSTART.md`
+**Purpose**: 5-minute setup and run guide
+
+**Contents**:
+- Quick installation steps
+- Running the system
+- Common troubleshooting
+- Next steps
+
 ### `model_training_reference.md`
 **Purpose**: Historical reference for YOLOv8 model creation and TFLite export process
 
@@ -20,7 +55,7 @@ This directory contains historical references and documentation for model creati
 - Troubleshooting model-related issues
 - Learning about INT8 quantization process
 
-### `yolo_int8.py`
+### `training_scripts/yolo_int8.py`
 **Purpose**: Reference script for exporting YOLOv8 models to TFLite INT8 format
 
 **Contents**:
@@ -37,19 +72,23 @@ This directory contains historical references and documentation for model creati
 
 ## Related Documentation
 
+### Architecture Documentation
+- **`ARCHITECTURE_V3_HYBRID.md`** ⭐ - Complete V3 HYBRID guide (651 lines)
+- **`../ARCHITECTURE.md`** - Architecture overview (redirects to V3_HYBRID)
+- **`ARCHITECTURE_V2.md`** - Previous V2 architecture (historical)
+
 ### Model Documentation
 - **`../models/README.md`** - Complete model technical documentation, usage examples, and benchmarks
+- **`model_training_reference.md`** - How models were created and exported
+- **`training_scripts/yolo_int8.py`** - Export script reference
 
-### Pipeline Documentation  
-- **`../production/README.md`** - Production pipeline guide (Ultralytics + BoT-SORT)
-- **`../research/README.md`** - Research pipeline guide (Custom TFLite + ByteTrack)
-
-### Deployment
+### Deployment & Setup
 - **`../DEPLOYMENT.md`** - Complete deployment guide (venv, Docker, Raspberry Pi)
-- **`../ARCHITECTURE.md`** - Future system architecture plans
+- **`QUICKSTART.md`** - 5-minute setup guide
+- **`../README.md`** - Project overview and quick start
 
-### Main Documentation
-- **`../README.md`** - Project overview and quick start guide
+### Historical Implementations
+- **`../archive/v1_pipeline/README.md`** - v1.0 custom implementation (TFLite + ByteTrack from scratch)
 
 ## Why This Directory Exists
 
@@ -69,12 +108,14 @@ Without these references, it would be difficult to re-create or modify the model
 ## Quick Links
 
 ### Want to...
+- **Understand the architecture?** → Read `ARCHITECTURE_V3_HYBRID.md` ⭐
+- **Run the system quickly?** → See `QUICKSTART.md` (5 minutes)
 - **Use the model?** → See `../models/README.md`
-- **Run the pipeline?** → See `../README.md` (Quick Start)
 - **Deploy to Raspberry Pi?** → See `../DEPLOYMENT.md`
-- **Export a new model?** → Read `model_training_reference.md` + use `yolo_int8.py` as template
-- **Understand tracking?** → See `../research/README.md` (ByteTrack explanation)
+- **Export a new model?** → Read `model_training_reference.md` + use `training_scripts/yolo_int8.py` as template
+- **Add new features?** → See `ARCHITECTURE_V3_HYBRID.md` (Adding Components section)
 - **Improve performance?** → See `../DEPLOYMENT.md` (Performance Tuning)
+- **See historical implementations?** → Check `../archive/v1_pipeline/`
 
 ## Contributing
 
@@ -88,4 +129,4 @@ When adding new model variants or export processes:
 
 ---
 
-**Last Updated**: October 31, 2025
+**Last Updated**: November 4, 2025 (V3 HYBRID Architecture Complete)

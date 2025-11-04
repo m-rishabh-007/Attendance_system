@@ -8,12 +8,12 @@ Real-time face detection and tracking pipeline optimized for Raspberry Pi and la
 
 ## 🚀 Quick Start
 
-### Production Pipeline (Recommended)
+### Run the Systd
 
 ```bash
 cd /home/rishabh/Attendance_system
 source venv/bin/activate
-cd production
+cd prodsystem
 python attendance_ultralytics.py
 ```
 
@@ -29,65 +29,69 @@ python attendance_ultralytics.py
 
 ```
 Attendance_system/
-├── production/                    # 🎯 USE THIS FOR DEPLOYMENT
-│   ├── attendance_ultralytics.py # Main production pipeline
-│   ├── attendance_prototype.py   # Original prototype (reference)
-│   └── README.md                 # Production documentation
+├── attendance_system.py           # 🎯 MAIN ENTRY POINT (OOP with 4 design patterns)
+├── config.yaml                    # 🔧 Runtime configuration
 │
-├── research/                      # 📚 LEARNING REFERENCE
-│   ├── yolov8_face_pipeline/     # Custom TFLite implementation
-│   │   ├── pipeline_main.py      # Raw TFLite + custom ByteTrack
-│   │   ├── face_tracker_bytetrack.py  # ByteTrack from scratch
-│   │   └── pipeline_config.yaml  # Shared configuration
-│   └── README.md                 # Research documentation
+├── common/                        # �️ SHARED COMPONENTS
+│   ├── config_manager.py         # Singleton pattern
+│   ├── event_system.py           # Observer pattern
+│   └── base_classes.py           # Abstract interfaces
 │
-├── models/                           # 🤖 MODEL FILES
+├── detectors/                     # � DETECTION MODULES
+│   ├── factory.py                # Factory pattern
+│   ├── yolo_detector.py          # Ultralytics YOLO wrapper
+│   └── tflite_detector.py        # Direct TFLite inference
+│
+├── tracking/                      # 🎯 TRACKING MODULES
+│   ├── factory.py                # Factory pattern (Strategy)
+│   ├── botsort_tracker.py        # BoT-SORT tracker (production)
+│   └── no_tracker.py             # Dummy tracker (testing)
+│
+├── tests/                         # ✅ TEST SUITE
+│   ├── test_config_manager.py    # Singleton tests
+│   ├── test_event_system.py      # Observer tests
+│   ├── test_factories.py         # Factory + Strategy tests
+│   └── run_all_tests.py          # Master test runner
+│
+├── models/                        # 🤖 MODEL FILES
 │   ├── yolov8n_face_int8.tflite  # INT8 quantized YOLOv8n (1.5MB)
 │   └── README.md                 # Model documentation
 │
-├── venv/                          # Python virtual environment
-└── README.md                      # This file
+├── docs/                          # 📄 DOCUMENTATION
+│   ├── ARCHITECTURE_V2.md        # Design patterns explained
+│   ├── QUICKSTART.md             # 5-minute setup guide
+│   └── training_scripts/         # Model export reference
+│
+├── logs/                          # 📊 RUNTIME LOGS
+│   └── attendance_YYYY-MM-DD.log # Daily log files
+│
+├── archive/                       # 📚 HISTORICAL CODE (v1.0)
+│   └── v1_pipeline/              # Old procedural implementation
+│       ├── pipeline_main.py      # Raw TFLite + custom ByteTrack
+│       ├── face_tracker_bytetrack.py  # ByteTrack from scratch
+│       └── README.md             # Archival documentation
+│
+└── venv/                          # Python virtual environment
 ```
 
 ---
 
-## 🎯 Which Pipeline Should I Use?
+## 🎯 Architecture Highlights
 
-### For Production/Deployment → `production/`
-**Use**: `attendance_ultralytics.py`
+### v2.0 Design Patterns (Production-Ready)
 
-✅ **Reasons:**
-- Superior track persistence (IDs maintained during fast motion)
-- BoT-SORT tracker (motion + appearance features)
-- Minimal code maintenance (10 lines vs 800+)
-- Active development and bug fixes
-- Production-ready error handling
+✅ **Singleton Pattern** - `ConfigManager` ensures single configuration source  
+✅ **Observer Pattern** - `EventSystem` enables event-driven architecture  
+✅ **Factory Pattern** - Easy detector/tracker swapping via configuration  
+✅ **Strategy Pattern** - Interchangeable tracking algorithms (BoT-SORT, ByteTrack)
 
-### For Learning/Research → `research/`
-**Use**: `yolov8_face_pipeline/pipeline_main.py`
+### Key Features
 
-✅ **Reasons:**
-- Understand YOLO post-processing internals
-- Learn Kalman filter tracking mathematics
-- Custom algorithm experimentation
-- Embedded deployment (<512MB RAM)
-- Portfolio/academic projects
-
----
-
-## 📊 Performance Comparison
-
-| Metric | Production (Ultralytics) | Research (Custom) |
-|--------|--------------------------|-------------------|
-| **Code Lines** | 30 | 800+ |
-| **Track Persistence** | ⭐⭐⭐⭐⭐ Excellent | ⭐⭐⭐ Good |
-| **Motion Robustness** | ⭐⭐⭐⭐⭐ Excellent | ⭐⭐⭐ Moderate |
-| **Inference Speed** | 45ms (slower) | 25ms (faster) |
-| **FPS** | 20-25 | 25-27 |
-| **Maintenance** | Low | High |
-| **Use Case** | Production | Learning/Embedded |
-
-**Verdict**: Production pipeline trades 20ms latency for **significantly better tracking quality**. Both achieve real-time performance.
+- **Modular Design**: Clean separation (detection, tracking, events, config)
+- **OOP Architecture**: Maintainable, extensible, testable
+- **Superior Tracking**: BoT-SORT maintains IDs during motion/occlusion
+- **Configuration-Driven**: Change models/trackers without code changes
+- **Comprehensive Tests**: 20 unit tests covering all design patterns
 
 ---
 
@@ -123,14 +127,18 @@ pip install -r requirements.txt
 
 ## ⚙️ Configuration
 
-Edit `research/yolov8_face_pipeline/pipeline_config.yaml`:
+Edit `config.yaml` at project root:
 
 ```yaml
-# Detection
-confidence_threshold: 0.5    # Lower = more detections
-iou_threshold: 0.3           # NMS threshold
+# Detector settings
+detector:
+  type: yolo                        # or 'tflite'
+  confidence_threshold: 0.5         # Detection confidence
+  model_path: models/yolov8n_face_int8.tflite
 
-# Tracking  
+# Tracker settings
+tracker:
+  type: botsort                     # or 'bytetrack', 'none'  
 track_thresh: 0.4            # Minimum confidence for tracking
 track_buffer: 90             # Frames to keep lost tracks (3 sec @ 30fps)
 match_thresh: 0.4            # IoU threshold for matching
@@ -192,12 +200,14 @@ ffplay /dev/video1
 
 ## 📚 Documentation
 
-- **Production Guide**: `production/README.md`
-- **Research Guide**: `research/README.md`
+- **Complete Architecture Guide**: `docs/ARCHITECTURE_V3_HYBRID.md` ⭐
+- **Architecture Overview**: `ARCHITECTURE.md` (redirect to V3_HYBRID)
+- **Quick Start Guide**: `docs/QUICKSTART.md`
 - **Model Documentation**: `models/README.md`
 - **Training Reference**: `docs/model_training_reference.md`
-- **Architecture Plan**: `ARCHITECTURE.md`
 - **Deployment Guide**: `DEPLOYMENT.md`
+- **V2 Architecture (Previous)**: `docs/ARCHITECTURE_V2.md`
+- **Historical Implementations**: `archive/v1_pipeline/`
 
 ---
 

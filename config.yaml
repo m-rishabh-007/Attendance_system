@@ -1,0 +1,125 @@
+# Face Attendance System - Configuration File
+# Version 2.0 - Refactored with OOP and Design Patterns
+# All paths are relative to project root
+
+# =============================================================================
+# DETECTOR CONFIGURATION (Factory Pattern)
+# =============================================================================
+detector:
+  # Detector type: 'yolo' (Ultralytics with TFLite backend)
+  # - 'yolo': Production-ready with integrated tracking support
+  type: yolo
+  
+  # Model path (relative to project root - now organized by type)
+  model_path: models/detection/yolov8n_face_int8.tflite
+  
+  # Detection parameters
+  confidence_threshold: 0.5  # Minimum confidence for face detection [0.0-1.0]
+  iou_threshold: 0.3         # NMS IoU threshold [0.0-1.0]
+  input_size: 256            # Model input size (DO NOT change unless model retrained)
+  
+  # TFLite-specific settings (only used when type='tflite')
+  tflite:
+    num_threads: 3           # CPU threads (3 for Pi, 4 for laptop)
+    delegate: null           # null, 'xnnpack', or 'edgetpu'
+
+# =============================================================================
+# TRACKER CONFIGURATION (Strategy Pattern)
+# =============================================================================
+tracker:
+  # Tracker type: 'botsort' or 'none' (for testing)
+  # - 'botsort': Best quality, handles occlusions well (recommended)
+  # - 'none': No tracking (testing only)
+  # - 'none': No tracking, just detection (for performance testing)
+  type: botsort
+  
+  # Tracking parameters
+  track_thresh: 0.5          # Min confidence to start tracking [0.0-1.0] (increased from 0.4)
+  track_buffer: 120          # Frames to keep lost tracks alive (120 = ~4 sec @ 30fps, increased from 90)
+  match_thresh: 0.3          # IoU threshold for track matching [0.0-1.0] (decreased from 0.4 for better matching)
+  frame_rate: 30             # Expected camera frame rate
+  
+  # ⚠️ IMPORTANT: Track IDs are temporary and may swap between people!
+  # This is normal for tracking-only systems (no face recognition yet).
+  # To fix: Implement Phase 2 (Face Recognition) which maps Track IDs → Person Identity
+
+# =============================================================================
+# CAMERA CONFIGURATION
+# =============================================================================
+camera:
+  device_id: 1               # Camera device index (0=default, 1=secondary, etc.)
+  resolution:                # Camera resolution (null = use camera default)
+    width: null
+    height: null
+  fps: null                  # Camera FPS (null = use camera default)
+
+# =============================================================================
+# DISPLAY CONFIGURATION
+# =============================================================================
+display:
+  show_window: true          # Show live video window
+  window_name: "Face Attendance System v2.0"
+  show_fps: true             # Display FPS counter
+  show_track_ids: true       # Show track IDs on faces
+  show_confidence: true      # Show confidence scores
+  
+  # Colors (BGR format)
+  bbox_color: [0, 255, 0]    # Bounding box color (green)
+  text_color: [0, 255, 0]    # Text color (green)
+  font_scale: 0.6            # Text size
+  thickness: 2               # Line thickness
+
+# =============================================================================
+# PERFORMANCE CONFIGURATION
+# =============================================================================
+performance:
+  process_every_n_frames: 1  # Process every Nth frame (1=all, 2=skip every other)
+  max_fps: null              # Limit FPS (null=unlimited, useful for testing)
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+logging:
+  # Log level: 'DEBUG', 'INFO', 'WARNING', 'ERROR'
+  console_level: INFO        # Console output level
+  file_level: DEBUG          # File output level (more detailed)
+  
+  # Log directory (relative to project root)
+  log_dir: production/logs
+  
+  # Stats interval (frames)
+  stats_interval: 50         # Print stats every N frames
+
+# =============================================================================
+# EVENT SYSTEM CONFIGURATION (Observer Pattern)
+# =============================================================================
+events:
+  # Enable event system
+  enabled: true
+  
+  # Event history size (for debugging)
+  history_size: 100
+  
+  # Subscribe to events (future use for attendance marking)
+  subscriptions:
+    face_detected: true      # Log when new face detected
+    face_lost: true          # Log when track lost
+    face_recognized: false   # Not implemented yet
+    attendance_marked: false # Not implemented yet
+
+# =============================================================================
+# FUTURE: RECOGNITION CONFIGURATION
+# =============================================================================
+recognition:
+  enabled: false             # Not implemented yet
+  model_path: null
+  database_path: null
+  threshold: 0.6
+
+# =============================================================================
+# FUTURE: ATTENDANCE CONFIGURATION
+# =============================================================================
+attendance:
+  enabled: false             # Not implemented yet
+  database_path: null
+  auto_mark: false

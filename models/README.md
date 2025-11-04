@@ -61,7 +61,7 @@ model = YOLO('models/yolov8n_face_int8.tflite', task='detect')
 results = model.track(frame, persist=True, conf=0.5, iou=0.3)
 ```
 
-**Used by**: [`production/attendance_ultralytics.py`](../production/attendance_ultralytics.py)
+**Used by**: [`archive/v1_pipeline/attendance_ultralytics.py`](../archive/v1_pipeline/attendance_ultralytics.py)
 
 ### Research Pipeline (Direct TFLite)
 

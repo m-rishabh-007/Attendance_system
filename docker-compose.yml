@@ -36,11 +36,11 @@ services:
       # X11 socket for GUI display (if needed)
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       
-      # Mount config for easy modification without rebuild
-      - ./yolov8_face_pipeline/pipeline_config.yaml:/app/yolov8_face_pipeline/pipeline_config.yaml:ro
+      # Mount config for easy modification without rebuild (V3 HYBRID)
+      - ./config.yaml:/app/config.yaml:ro
       
       # Optional: Mount for saving attendance logs (future feature)
-      # - ./logs:/app/logs
+      - ./logs:/app/logs
     
     # Network configuration (for future API server)
     # ports:

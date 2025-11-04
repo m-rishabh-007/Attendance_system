@@ -356,4 +356,4 @@ For production deployment, you'll need to implement:
 3. **API Server**: REST API for remote access
 4. **Web Dashboard**: View attendance in real-time
 
-See `ARCHITECTURE.md` for the planned architecture.
+See `docs/ARCHITECTURE_V3_HYBRID.md` for the complete V3 HYBRID architecture and implementation patterns.

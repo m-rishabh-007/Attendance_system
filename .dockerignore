@@ -21,11 +21,17 @@ calibration_dataset/
 *_calibration/
 *.npy
 
-# Documentation and development files
-docs/
+# Archive directory (old v1.0 code - not needed in container)
+archive/
+
+# Documentation and development files (keep essential docs for V3 HYBRID)
 *.md
 !README.md
 !ARCHITECTURE.md
+!docs/ARCHITECTURE_V3_HYBRID.md
+!docs/DEVELOPER_GUIDE.md
+!docs/QUICKSTART.md
+!docs/model_training_reference.md
 .github/
 .git/
 .gitignore

@@ -4,11 +4,12 @@ Thank you for your interest in contributing! This is an educational/research pro
 
 ## Project Philosophy
 
-This project serves dual purposes:
-1. **Production-ready pipeline** using battle-tested tools (Ultralytics)
-2. **Learning reference** with custom implementations (TFLite + ByteTrack)
+This project demonstrates **V3 HYBRID Architecture** - a perfect combination of:
+1. **Pipeline orchestration** (clean separation of concerns)
+2. **Design patterns** (Factory, Strategy, Singleton, Observer)
+3. **Modular structure** (easy to extend and maintain)
 
-Both aspects are valuable and worth maintaining!
+Current status: ✅ Detection + Tracking working | 🚧 Recognition + Attendance (future phases)
 
 ## How to Contribute
 
@@ -32,17 +33,26 @@ pip install -r requirements.txt
 ### 2. Understanding the Project Structure
 
 ```
-production/     → Production-ready code (Ultralytics + BoT-SORT)
-research/       → Learning reference (Custom TFLite + ByteTrack)
-models/         → Shared model files
-docs/           → Documentation and references
+attendance_system.py    → Main entry point (thin wrapper)
+config.yaml             → All configuration
+pipeline/               → Orchestration layer
+detectors/              → Detector implementations (Factory pattern)
+tracking/               → Tracker implementations (Strategy pattern)
+common/                 → Singleton + Observer patterns
+aligners/               → (future) Face alignment
+recognizers/            → (future) Face recognition
+database/               → (future) Data persistence
+server/                 → (future) API deployment
+models/                 → Model files organized by type
+docs/                   → Documentation
+archive/                → Historical v1.0 implementations
 ```
 
 **Read these first**:
 - `README.md` - Project overview
-- `production/README.md` - Production pipeline details
-- `research/README.md` - Custom implementation details
-- `ARCHITECTURE.md` - Future plans
+- `docs/ARCHITECTURE_V3_HYBRID.md` - Complete V3 HYBRID architecture guide
+- `docs/QUICKSTART.md` - 5-minute setup guide
+- `ARCHITECTURE.md` - Architecture overview (redirects to V3_HYBRID doc)
 
 ### 3. Types of Contributions
 
@@ -57,37 +67,41 @@ docs/           → Documentation and references
 - Create tutorials or guides
 - Fix typos or unclear explanations
 
-#### ✨ Features (Production Pipeline)
-**Goal**: Reliability and maintainability
+#### ✨ Features (Following V3 HYBRID Architecture)
+**Goal**: Maintain modular structure and design patterns
 
 Examples:
-- Add face recognition (ArcFace embeddings)
-- Implement attendance database
-- Create REST API server
+- Add face alignment (create `aligners/` implementations with Factory pattern)
+- Add face recognition (create `recognizers/` with ArcFace embeddings)
+- Implement attendance database (create `database/` layer)
+- Create REST API server (add to `server/` folder)
 - Build web dashboard
 - Add multi-camera support
 
 **Guidelines**:
-- Use established libraries (Ultralytics, FastAPI, etc.)
-- Prioritize code simplicity and maintainability
+- Follow V3 HYBRID architecture patterns (see `docs/ARCHITECTURE_V3_HYBRID.md`)
+- Use Factory pattern for swappable components
+- Keep orchestration (pipeline/) separate from implementation (component folders)
+- All configuration in `config.yaml` (NO hardcoded values)
+- Use established libraries (Ultralytics, FastAPI, SQLAlchemy)
 - Write comprehensive tests
 - Document all configuration options
 
-#### 🔬 Features (Research Pipeline)
-**Goal**: Learning and experimentation
+#### 🔬 Experimental Features
+**Goal**: Explore alternatives while maintaining architecture
 
 Examples:
-- Implement BoT-SORT from scratch
-- Add appearance features (ReID)
-- Experiment with different NMS algorithms
-- Optimize inference performance
-- Add custom tracking strategies
+- Try different detectors (RetinaFace, MTCNN) - add to `detectors/`
+- Implement custom trackers (DeepSORT, SORT) - add to `tracking/`
+- Experiment with alignment methods - add to `aligners/`
+- Test different embedding models - add to `recognizers/`
 
 **Guidelines**:
-- Document the learning outcomes
-- Explain algorithm choices
-- Compare with production approach
-- Keep code readable for learning
+- Create new implementation in appropriate component folder
+- Register in factory for easy swapping
+- Keep existing implementations working
+- Document performance comparisons
+- Maintain code quality for learning
 
 #### 🚀 Performance Improvements
 - Optimize inference speed
@@ -195,7 +209,7 @@ def detect_faces(frame: np.ndarray, confidence: float = 0.5) -> List[Detection]:
    - Extract face embeddings (ArcFace)
    - Build face database
    - Implement similarity matching
-   - See: `ARCHITECTURE.md` for planned design
+   - See: `docs/ARCHITECTURE_V3_HYBRID.md` for implementation pattern
 
 2. **Attendance Logging**
    - Design database schema
