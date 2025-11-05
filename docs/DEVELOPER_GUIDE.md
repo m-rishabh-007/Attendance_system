@@ -10,11 +10,12 @@ Last Updated: November 5, 2025
 
 1. [Quick Navigation](#quick-navigation)
 2. [Architecture Overview](#architecture-overview)
-3. [Component Documentation](#component-documentation)
-4. [Testing Guide](#testing-guide)
-5. [Common Development Tasks](#common-development-tasks)
-6. [Critical Implementation Details](#critical-implementation-details)
-7. [Troubleshooting](#troubleshooting)
+3. [Architecture Decision Records (ADRs)](#architecture-decision-records-adrs)
+4. [Component Documentation](#component-documentation)
+5. [Testing Guide](#testing-guide)
+6. [Common Development Tasks](#common-development-tasks)
+7. [Critical Implementation Details](#critical-implementation-details)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -71,7 +72,32 @@ For complete architecture details, see [`ARCHITECTURE_V3_HYBRID.md`](ARCHITECTUR
 
 ---
 
-## 📖 Component Documentation
+## � Architecture Decision Records (ADRs)
+
+**Purpose**: Documents why we made specific architectural/technology choices.
+
+| ADR | Title | Status | Date |
+|-----|-------|--------|------|
+| [ADR-001](ADR_001_ALIGNMENT_MODEL_SELECTION.md) | Face Alignment Model Selection | ✅ Accepted | Nov 5, 2025 |
+
+**Why Document Decisions?**
+- Future developers understand the "why" behind choices
+- Prevents rehashing old discussions
+- Shows what alternatives were considered
+- Makes it easy to revisit decisions if constraints change
+
+**ADR-001 Summary**: Chose MediaPipe Face Mesh for alignment over:
+- Retraining YOLO with keypoints (delays implementation)
+- MediaPipe-only detection (loses BoT-SORT tracking)
+- MTCNN (too slow: 80-120ms)
+- RetinaFace (way too slow: 150-250ms)
+- No alignment (lower accuracy)
+
+**Read the full analysis**: [`docs/ADR_001_ALIGNMENT_MODEL_SELECTION.md`](ADR_001_ALIGNMENT_MODEL_SELECTION.md)
+
+---
+
+## �📖 Component Documentation
 
 ### 1. Pipeline Layer (`pipeline/`)
 

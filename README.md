@@ -200,14 +200,20 @@ ffplay /dev/video1
 
 ## 📚 Documentation
 
-- **Complete Architecture Guide**: `docs/ARCHITECTURE_V3_HYBRID.md` ⭐
-- **Architecture Overview**: `ARCHITECTURE.md` (redirect to V3_HYBRID)
-- **Quick Start Guide**: `docs/QUICKSTART.md`
-- **Model Documentation**: `models/README.md`
-- **Training Reference**: `docs/model_training_reference.md`
-- **Deployment Guide**: `DEPLOYMENT.md`
-- **V2 Architecture (Previous)**: `docs/ARCHITECTURE_V2.md`
-- **Historical Implementations**: `archive/v1_pipeline/`
+### Core Documentation
+- **Developer Guide**: [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) ⭐ (Master reference)
+- **Complete Architecture**: [`docs/ARCHITECTURE_V3_HYBRID.md`](docs/ARCHITECTURE_V3_HYBRID.md) ⭐
+- **Quick Start Guide**: [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
+
+### Architecture Decision Records (ADRs)
+- **ADR-001**: [Face Alignment Model Selection](docs/ADR_001_ALIGNMENT_MODEL_SELECTION.md) (Why MediaPipe?)
+
+### Additional Resources
+- **Model Documentation**: [`models/README.md`](models/README.md)
+- **Training Reference**: [`docs/model_training_reference.md`](docs/model_training_reference.md)
+- **Deployment Guide**: [`DEPLOYMENT.md`](DEPLOYMENT.md)
+- **V2 Architecture (Previous)**: [`docs/ARCHITECTURE_V2.md`](docs/ARCHITECTURE_V2.md)
+- **Historical Implementations**: [`archive/v1_pipeline/`](archive/v1_pipeline/)
 
 ---
 
