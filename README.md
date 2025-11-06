@@ -2,19 +2,64 @@
 
 Real-time face detection and tracking pipeline optimized for Raspberry Pi and laptops.
 
-**Current Status**: ✅ Detection + Tracking + Production Ready | 🚧 Recognition + Attendance (planned)
+**Current Status**: ✅ Phase 1 Complete (Detection + Tracking) | 🚧 Phase 2 (Face Alignment - In Progress)
+
+---
+
+## ⚠️ CRITICAL: Python 3.11 Required
+
+**This project requires Python 3.11** due to:
+- `tflite-runtime` is NOT available for Python 3.12+ (PyPI limitation)
+- TensorFlow 2.16+ has circular dependency issues with MediaPipe on Python 3.12
+- NumPy/MediaPipe version conflicts on Python 3.12
+
+### Ubuntu 24.04 Installation (Python 3.12 default)
+
+```bash
+# Install Python 3.11 via deadsnakes PPA
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.11 python3.11-venv python3.11-dev
+
+# Create Python 3.11 virtual environment
+cd /home/rishabh/Attendance_system
+python3.11 -m venv venv_py311
+source venv_py311/bin/activate
+
+# Install dependencies (locked versions)
+pip install -r requirements.txt
+```
+
+### Raspberry Pi Installation (Python 3.11 available in default repos)
+
+```bash
+# Install Python 3.11 (should be in default repos)
+sudo apt update
+sudo apt install python3.11 python3.11-venv
+
+# Create virtual environment
+python3.11 -m venv venv_py311
+source venv_py311/bin/activate
+pip install -r requirements.txt
+```
+
+### Verify Installation
+
+```bash
+python --version  # Should show: Python 3.11.x
+python -c "import numpy, cv2, mediapipe, tflite_runtime; print('✅ All dependencies OK')"
+```
 
 ---
 
 ## 🚀 Quick Start
 
-### Run the Systd
+### Run the System
 
 ```bash
 cd /home/rishabh/Attendance_system
-source venv/bin/activate
-cd prodsystem
-python attendance_ultralytics.py
+source venv_py311/bin/activate  # IMPORTANT: Use Python 3.11 environment
+python attendance_system.py
 ```
 
 **Features:**
@@ -29,49 +74,60 @@ python attendance_ultralytics.py
 
 ```
 Attendance_system/
-├── attendance_system.py           # 🎯 MAIN ENTRY POINT (OOP with 4 design patterns)
+├── attendance_system.py           # 🎯 MAIN ENTRY POINT (V3 HYBRID architecture)
 ├── config.yaml                    # 🔧 Runtime configuration
 │
-├── common/                        # �️ SHARED COMPONENTS
+├── common/                        # 🛠️ SHARED COMPONENTS
 │   ├── config_manager.py         # Singleton pattern
 │   ├── event_system.py           # Observer pattern
 │   └── base_classes.py           # Abstract interfaces
 │
-├── detectors/                     # � DETECTION MODULES
+├── detectors/                     # 🔍 DETECTION MODULES
 │   ├── factory.py                # Factory pattern
-│   ├── yolo_detector.py          # Ultralytics YOLO wrapper
-│   └── tflite_detector.py        # Direct TFLite inference
+│   ├── yolo_detector.py          # YOLOv8n INT8 TFLite detector
+│   └── base_detector.py          # Abstract detector interface
 │
 ├── tracking/                      # 🎯 TRACKING MODULES
 │   ├── factory.py                # Factory pattern (Strategy)
-│   ├── botsort_tracker.py        # BoT-SORT tracker (production)
-│   └── no_tracker.py             # Dummy tracker (testing)
+│   ├── botsort_tracker.py        # BoT-SORT tracker (Phase 1 complete)
+│   └── base_tracker.py           # Abstract tracker interface
+│
+├── aligners/                      # 📐 ALIGNMENT MODULES (Phase 2 - In Progress)
+│   ├── factory.py                # Factory pattern
+│   ├── mediapipe_aligner.py      # MediaPipe Face Mesh alignment
+│   └── base_aligner.py           # Abstract aligner interface
+│
+├── pipeline/                      # 🚀 PIPELINE ORCHESTRATION
+│   ├── orchestrator.py           # Main pipeline controller
+│   └── detection_stage.py        # Detection pipeline stage
 │
 ├── tests/                         # ✅ TEST SUITE
 │   ├── test_config_manager.py    # Singleton tests
 │   ├── test_event_system.py      # Observer tests
 │   ├── test_factories.py         # Factory + Strategy tests
+│   ├── test_persistent_tracking.py # Tracking smoke test
 │   └── run_all_tests.py          # Master test runner
 │
 ├── models/                        # 🤖 MODEL FILES
-│   ├── yolov8n_face_int8.tflite  # INT8 quantized YOLOv8n (1.5MB)
-│   └── README.md                 # Model documentation
+│   └── detection/
+│       └── yolov8n_face_int8.tflite  # INT8 quantized YOLOv8n (1.5MB)
 │
 ├── docs/                          # 📄 DOCUMENTATION
-│   ├── ARCHITECTURE_V2.md        # Design patterns explained
-│   ├── QUICKSTART.md             # 5-minute setup guide
-│   └── training_scripts/         # Model export reference
+│   ├── DEVELOPER_GUIDE.md        # Master developer reference
+│   ├── ARCHITECTURE_V3_HYBRID.md # V3 architecture explained
+│   ├── ADR_001_ALIGNMENT_MODEL_SELECTION.md # MediaPipe decision
+│   └── QUICKSTART.md             # 5-minute setup guide
 │
 ├── logs/                          # 📊 RUNTIME LOGS
 │   └── attendance_YYYY-MM-DD.log # Daily log files
 │
-├── archive/                       # 📚 HISTORICAL CODE (v1.0)
-│   └── v1_pipeline/              # Old procedural implementation
-│       ├── pipeline_main.py      # Raw TFLite + custom ByteTrack
-│       ├── face_tracker_bytetrack.py  # ByteTrack from scratch
-│       └── README.md             # Archival documentation
+├── tools/                         # � UTILITY SCRIPTS
+│   └── check_keypoints.py        # Verify YOLO model capabilities
 │
-└── venv/                          # Python virtual environment
+├── venv_py311/                    # ⚠️ PYTHON 3.11 VIRTUAL ENVIRONMENT (required)
+│
+└── archive/                       # 📚 HISTORICAL CODE (v1.0)
+    └── v1_pipeline/              # Old pipeline implementation
 ```
 
 ---
@@ -98,29 +154,51 @@ Attendance_system/
 ## 🛠️ Installation
 
 ### Prerequisites
+
+**Python 3.11 is REQUIRED** - See the [Python 3.11 installation section](#️-critical-python-311-required) above.
+
 ```bash
 # System packages
 sudo apt-get update
-sudo apt-get install python3-pip python3-venv v4l-utils
+sudo apt-get install python3.11 python3.11-venv python3.11-dev v4l-utils
 
 # Check camera
 v4l2-ctl --list-devices
 ```
 
-### Setup Virtual Environment
+### Setup Python 3.11 Environment
 
-**Automated (Recommended)**:
 ```bash
 cd /home/rishabh/Attendance_system
-./setup_venv.sh
-source venv/bin/activate
+
+# Create Python 3.11 virtual environment
+python3.11 -m venv venv_py311
+
+# Activate environment
+source venv_py311/bin/activate
+
+# Verify Python version
+python --version  # Should show: Python 3.11.x
+
+# Install dependencies (locked versions for stability)
+pip install -r requirements.txt
+
+# Verify installation
+python -c "import numpy, cv2, mediapipe, tflite_runtime; print('✅ All dependencies OK')"
 ```
 
-**Manual**:
+### Daily Usage
+
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Activate Python 3.11 environment
+cd /home/rishabh/Attendance_system
+source venv_py311/bin/activate
+
+# Run the system
+python attendance_system.py
+
+# When done
+deactivate
 ```
 
 ---

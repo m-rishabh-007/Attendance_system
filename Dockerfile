@@ -2,17 +2,20 @@
 # Multi-stage Dockerfile for Face Attendance System
 # Optimized for Raspberry Pi (ARM architecture)
 # 
+# ⚠️  IMPORTANT: Uses Python 3.11 (required for tflite-runtime compatibility)
+#
 # Build: docker build -t face-attendance:latest .
 # Run:   docker run --rm --device /dev/video0:/dev/video0 -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix face-attendance:latest
 
-# Use Python 3.9 slim image (compatible with ARM)
-FROM python:3.9-slim-bullseye
+# Use Python 3.11 slim image (compatible with ARM)
+FROM python:3.11-slim-bookworm
 
 # Set metadata
 LABEL maintainer="your-email@example.com"
 LABEL description="Face Attendance System - V3 HYBRID Architecture with YOLOv8n TFLite and BoT-SORT"
 LABEL version="3.0"
 LABEL architecture="V3 HYBRID - Pipeline Orchestration + Design Patterns"
+LABEL python.version="3.11"
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1 \

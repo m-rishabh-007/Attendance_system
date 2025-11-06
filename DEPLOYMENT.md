@@ -2,6 +2,8 @@
 
 This guide covers deployment options for the Face Attendance System, with special focus on Raspberry Pi.
 
+⚠️ **IMPORTANT**: This project requires **Python 3.11**. See [README.md](README.md) for installation instructions.
+
 ## Table of Contents
 - [Quick Start (Development)](#quick-start-development)
 - [Virtual Environment Setup](#virtual-environment-setup)
@@ -15,38 +17,36 @@ This guide covers deployment options for the Face Attendance System, with specia
 ## Quick Start (Development)
 
 ### Prerequisites
-- Python 3.8 or higher
+- **Python 3.11** (required - see README.md for installation)
 - Camera (USB webcam or Raspberry Pi Camera Module)
 - 2GB+ RAM recommended
 
 ### Run Without Installation
 ```bash
-# Install dependencies
-pip install opencv-python numpy scipy pyyaml tflite-runtime
+# Install dependencies (Python 3.11 required)
+pip install opencv-python numpy scipy pyyaml tflite-runtime mediapipe
 
-# Run quick demo
+# Run the system
 python attendance_system.py
-
-# Or run production pipeline
-cd yolov8_face_pipeline
-python pipeline_main.py
 ```
 
 ---
 
 ## Virtual Environment Setup
 
-### Automated Setup (Recommended)
+### Setup for Python 3.11
 ```bash
-# Run the setup script (auto-detects platform)
-./setup_venv.sh
+# Create Python 3.11 virtual environment
+python3.11 -m venv venv_py311
 
 # Activate the environment
-source venv/bin/activate
+source venv_py311/bin/activate
 
-# Run the pipeline
-cd yolov8_face_pipeline
-python pipeline_main.py
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the system
+python attendance_system.py
 
 # Deactivate when done
 deactivate
@@ -56,38 +56,29 @@ deactivate
 
 #### On Desktop/Laptop:
 ```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
+# Create Python 3.11 virtual environment
+python3.11 -m venv venv_py311
+source venv_py311/bin/activate
 
 # Install dependencies
 pip install --upgrade pip
-pip install opencv-python numpy scipy pyyaml
+pip install -r requirements.txt
 
-# Install TFLite Runtime
-pip install --extra-index-url https://google-coral.github.io/py-repo/ tflite-runtime
-
-# Or install full TensorFlow (larger but includes more tools)
-# pip install tensorflow
-
-# Run the pipeline
-cd yolov8_face_pipeline
-python pipeline_main.py
+# Run the system
+python attendance_system.py
 ```
 
 #### On Raspberry Pi:
 ```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
+# Create Python 3.11 virtual environment
+python3.11 -m venv venv_py311
+source venv_py311/bin/activate
 
 # Install dependencies
 pip install --upgrade pip
 
-# Install lightweight OpenCV (no GUI)
-pip install opencv-python-headless
-
-# Install core packages
+# Install from locked requirements
+pip install -r requirements.txt
 pip install numpy scipy pyyaml
 
 # Install TFLite Runtime (optimized for ARM)
@@ -219,9 +210,9 @@ After=network.target
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/Attendance_system/yolov8_face_pipeline
-Environment="PATH=/home/pi/Attendance_system/venv/bin"
-ExecStart=/home/pi/Attendance_system/venv/bin/python pipeline_main.py
+WorkingDirectory=/home/pi/Attendance_system
+Environment="PATH=/home/pi/Attendance_system/venv_py311/bin"
+ExecStart=/home/pi/Attendance_system/venv_py311/bin/python attendance_system.py
 Restart=on-failure
 RestartSec=10
 

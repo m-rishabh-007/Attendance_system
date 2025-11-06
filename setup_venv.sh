@@ -1,7 +1,7 @@
 #!/bin/bash
 # setup_venv.sh
-# Creates and configures a Python virtual environment for the Face Attendance System
-# Designed for both development (laptops) and deployment (Raspberry Pi)
+# Creates and configures a Python 3.11 virtual environment for the Face Attendance System
+# ⚠️  IMPORTANT: Requires Python 3.11 (see README.md for installation)
 
 set -e  # Exit on any error
 
@@ -9,29 +9,31 @@ echo "🔧 Face Attendance System - Virtual Environment Setup"
 echo "======================================================"
 echo ""
 
-# Detect platform
-if grep -q "Raspberry Pi" /proc/cpuinfo 2>/dev/null || grep -q "BCM" /proc/cpuinfo 2>/dev/null; then
-    PLATFORM="raspberry_pi"
-    echo "📟 Platform detected: Raspberry Pi"
-else
-    PLATFORM="desktop"
-    echo "💻 Platform detected: Desktop/Laptop"
-fi
-
-echo ""
-
-# Check Python version
-PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-echo "🐍 Python version: $PYTHON_VERSION"
-
-# Require Python 3.8+
-if ! python3 -c "import sys; exit(0 if sys.version_info >= (3, 8) else 1)"; then
-    echo "❌ Error: Python 3.8 or higher is required"
+# Check if Python 3.11 is available
+if ! command -v python3.11 &> /dev/null; then
+    echo "❌ Error: Python 3.11 not found!"
+    echo ""
+    echo "Please install Python 3.11 first:"
+    echo ""
+    echo "Ubuntu 24.04:"
+    echo "  sudo add-apt-repository ppa:deadsnakes/ppa"
+    echo "  sudo apt update"
+    echo "  sudo apt install python3.11 python3.11-venv python3.11-dev"
+    echo ""
+    echo "Raspberry Pi:"
+    echo "  sudo apt update"
+    echo "  sudo apt install python3.11 python3.11-venv"
+    echo ""
     exit 1
 fi
 
+# Check Python version
+PYTHON_VERSION=$(python3.11 --version 2>&1 | awk '{print $2}')
+echo "🐍 Python version: $PYTHON_VERSION"
+echo ""
+
 # Create virtual environment
-VENV_DIR="venv"
+VENV_DIR="venv_py311"
 if [ -d "$VENV_DIR" ]; then
     echo "⚠️  Virtual environment already exists at ./$VENV_DIR"
     read -p "Remove and recreate? (y/N): " -n 1 -r
@@ -46,7 +48,7 @@ fi
 
 if [ ! -d "$VENV_DIR" ]; then
     echo "📦 Creating virtual environment at ./$VENV_DIR..."
-    python3 -m venv "$VENV_DIR"
+    python3.11 -m venv "$VENV_DIR"
     echo "✅ Virtual environment created"
 fi
 
@@ -58,7 +60,7 @@ source "$VENV_DIR/bin/activate"
 echo "⬆️  Upgrading pip..."
 pip install --upgrade pip setuptools wheel
 
-# Install dependencies based on platform
+# Install dependencies based on requirements.txt
 echo ""
 echo "📥 Installing dependencies..."
 
@@ -106,18 +108,12 @@ echo "✨ Setup complete!"
 echo ""
 echo "📋 Next steps:"
 echo "   1. Activate the environment:"
-echo "      source venv/bin/activate"
+echo "      source venv_py311/bin/activate"
 echo ""
-echo "   2. Test the pipeline:"
-if [ "$PLATFORM" = "raspberry_pi" ]; then
-    echo "      cd yolov8_face_pipeline"
-    echo "      python pipeline_main.py"
-else
-    echo "      python attendance_system.py  # Quick demo"
-    echo "      cd yolov8_face_pipeline && python pipeline_main.py  # Production"
-fi
+echo "   2. Test the system:"
+echo "      python attendance_system.py"
 echo ""
 echo "   3. Deactivate when done:"
 echo "      deactivate"
 echo ""
-echo "💡 Tip: Add 'venv/' to .gitignore to avoid committing the virtual environment"
+echo "💡 Tip: venv_py311/ is already in .gitignore"

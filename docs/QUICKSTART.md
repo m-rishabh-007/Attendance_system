@@ -1,10 +1,12 @@
-# Face Attendance System v2.0 - Quick Start Guide
+# Face Attendance System v3.0 - Quick Start Guide
+
+⚠️ **IMPORTANT**: This project requires **Python 3.11**. See [README.md](../README.md) for installation.
 
 ## 🚀 5-Minute Setup
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.11 (required - see README.md)
 - Webcam
 - Ubuntu/Raspberry Pi OS
 
@@ -14,8 +16,8 @@
 # Navigate to project
 cd /home/rishabh/Attendance_system
 
-# Activate virtual environment (IMPORTANT!)
-source venv/bin/activate
+# Activate Python 3.11 virtual environment (IMPORTANT!)
+source venv_py311/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -32,7 +34,7 @@ ls -lh models/yolov8n_face_int8.tflite
 
 ```bash
 # Activate virtual environment first
-source venv/bin/activate
+source venv_py311/bin/activate
 
 # Test all design patterns
 python tests/run_all_tests.py
@@ -51,9 +53,9 @@ Expected output:
 
 ```bash
 # Activate virtual environment first
-source venv/bin/activate
+source venv_py311/bin/activate
 
-# Run production pipeline
+# Run the system
 python attendance_system.py
 ```
 
