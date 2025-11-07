@@ -44,6 +44,26 @@ tracker:
   # To fix: Implement Phase 2 (Face Recognition) which maps Track IDs → Person Identity
 
 # =============================================================================
+# ALIGNER CONFIGURATION (Phase 2 - Face Alignment)
+# =============================================================================
+aligner:
+  # Aligner type: 'mediapipe' (currently only option)
+  # - 'mediapipe': 468-landmark Face Mesh alignment (CPU optimized)
+  type: mediapipe
+  
+  # Alignment parameters
+  output_size: [112, 112]           # Output face size (width, height) for recognition
+  min_detection_confidence: 0.5     # Minimum confidence for landmark detection [0.0-1.0]
+  min_tracking_confidence: 0.5      # Minimum confidence for landmark tracking [0.0-1.0]
+  refine_landmarks: false           # Use attention mesh for iris landmarks (slower)
+  
+  # MediaPipe uses 5-point alignment:
+  # - Left eye (landmark 33), Right eye (landmark 263)
+  # - Nose tip (landmark 1)
+  # - Left mouth (landmark 61), Right mouth (landmark 291)
+  # These are warped to canonical positions for 112x112 output
+
+# =============================================================================
 # CAMERA CONFIGURATION
 # =============================================================================
 camera:

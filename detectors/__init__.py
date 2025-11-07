@@ -11,4 +11,8 @@ Use Cases:
     - Platform-specific model selection (Pi vs Laptop)
 """
 
+from detectors.factory import DetectorFactory
+from detectors.yolo_detector import YOLODetector
+
 __version__ = "2.0.0"
+__all__ = ['DetectorFactory', 'YOLODetector']
