@@ -182,6 +182,9 @@ class FaceAttendanceSystem:
         This demonstrates loose coupling - event handlers can be
         added/removed without modifying the detection/tracking code.
         """
+        if self.config is None or self.events is None:
+            return
+        
         if not self.config.get('events.enabled', True):
             return
         
@@ -222,6 +225,10 @@ class FaceAttendanceSystem:
         
         try:
             while self._is_running:
+                # Null checks for type safety
+                if self.camera is None or self.pipeline is None or self.config is None:
+                    raise RuntimeError("System components not properly initialized")
+                
                 # Capture frame
                 ret, frame = self.camera.read()
                 if not ret:

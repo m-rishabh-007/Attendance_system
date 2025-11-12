@@ -80,7 +80,7 @@ def create_aligned_face_grid(aligned_faces: dict, grid_cols: int = 4) -> np.ndar
 def main():
     """Main test function."""
     parser = argparse.ArgumentParser(description="Test MediaPipe face alignment")
-    parser.add_argument('--camera', type=int, default=0, help='Camera device ID')
+    parser.add_argument('--camera', type=int, default=1, help='Camera device ID')
     parser.add_argument('--video', type=str, help='Path to video file')
     parser.add_argument('--config', type=str, default='config.yaml', help='Config file path')
     args = parser.parse_args()

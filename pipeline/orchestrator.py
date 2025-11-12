@@ -20,6 +20,7 @@ import numpy as np
 
 from pipeline.detection_stage import DetectionStage
 from pipeline.tracking_stage import TrackingStage
+from pipeline.recognition_stage import RecognitionStage
 
 
 class PipelineOrchestrator:
@@ -74,18 +75,17 @@ class PipelineOrchestrator:
         self.tracking_stage = TrackingStage(tracker_config)
         
         # Future stages (conditionally initialized)
-        self.alignment_stage = None
         self.recognition_stage = None
         self.attendance_stage = None
         
-        # Check if future stages are enabled
-        if config.get('alignment.enabled', False):
-            self.logger.info("Stage 3: Alignment - ENABLED (future)")
-            # TODO: self.alignment_stage = AlignmentStage(config.get_section('alignment'))
-        
+        # Stage 3: Recognition (alignment + recognition integrated)
         if config.get('recognition.enabled', False):
-            self.logger.info("Stage 4: Recognition - ENABLED (future)")
-            # TODO: self.recognition_stage = RecognitionStage(config.get_section('recognition'))
+            self.logger.info("Stage 3: Recognition (Alignment + Recognition)")
+            try:
+                self.recognition_stage = RecognitionStage(config)
+            except Exception as e:
+                self.logger.error(f"Failed to initialize recognition stage: {e}")
+                self.logger.warning("Continuing without recognition stage")
         
         if config.get('attendance.enabled', False):
             self.logger.info("Stage 5: Attendance - ENABLED (future)")
@@ -108,9 +108,8 @@ class PipelineOrchestrator:
         Returns:
             Dictionary containing:
                 - detections: Raw detection results
-                - tracks: Track objects with persistent IDs
-                - aligned_faces: (future) Aligned face crops
-                - identities: (future) Recognized person IDs
+                - tracks: Track objects with persistent IDs (may have embeddings attached)
+                - recognition_result: Recognition stage results (if enabled)
                 - annotated_frame: Frame with visualizations
                 - processing_time_ms: Total processing time
         """
@@ -130,19 +129,14 @@ class PipelineOrchestrator:
         # For YOLO detector: Uses model.track(persist=True) ✅
         # For other detectors: Falls back to separate tracking (may have ID fluctuations)
         
-        # Stage 3: Alignment (if enabled)
-        aligned_faces = None
-        if self.alignment_stage is not None:
-            aligned_faces = self.alignment_stage.process(frame, tracks)
+        # Stage 3: Recognition (includes alignment)
+        recognition_result = None
+        if self.recognition_stage is not None:
+            recognition_result = self.recognition_stage.process(frame, tracks)
         
-        # Stage 4: Recognition (if enabled)
-        identities = None
-        if self.recognition_stage is not None and aligned_faces is not None:
-            identities = self.recognition_stage.process(aligned_faces)
-        
-        # Stage 5: Attendance (if enabled)
-        if self.attendance_stage is not None and identities is not None:
-            self.attendance_stage.process(identities)
+        # Stage 4: Attendance (future - if enabled)
+        if self.attendance_stage is not None and recognition_result is not None:
+            self.attendance_stage.process(tracks)
         
         # Calculate processing time
         processing_time_ms = (time.time() - start_time) * 1000
@@ -151,9 +145,8 @@ class PipelineOrchestrator:
         result = {
             'detections': detections,
             'tracks': tracks,
-            'aligned_faces': aligned_faces,
-            'identities': identities,
-            'annotated_frame': self._annotate_frame(frame, tracks, identities),
+            'recognition_result': recognition_result,
+            'annotated_frame': self._annotate_frame(frame, tracks),
             'processing_time_ms': processing_time_ms
         }
         
@@ -162,8 +155,7 @@ class PipelineOrchestrator:
     def _annotate_frame(
         self,
         frame: np.ndarray,
-        tracks: List[Any],
-        identities: Optional[List[Any]] = None
+        tracks: List[Any]
     ) -> np.ndarray:
         """
         Draw annotations on frame.
@@ -210,10 +202,16 @@ class PipelineOrchestrator:
             # Draw bounding box
             cv2.rectangle(frame, (x, y), (x + w, y + h), bbox_color, thickness)
             
-            # Draw label with ID and confidence
+            # Draw label with ID, confidence, and quality (if available)
             label = f"ID: {track_id} ({confidence:.2f})"
-            if identities and i < len(identities):
-                label = f"{identities[i]} (ID: {track_id}, {confidence:.2f})"
+            
+            # Add quality score if available (Phase 3A)
+            if hasattr(track, 'quality'):
+                label = f"ID: {track_id} Q:{track.quality:.2f} C:{confidence:.2f}"
+            
+            # Add identity if recognized (Phase 3C - future)
+            if hasattr(track, 'identity') and track.identity is not None:
+                label = f"{track.identity} (ID: {track_id}, Q:{track.quality:.2f})"
             
             # Background for text
             (text_w, text_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
@@ -230,8 +228,6 @@ class PipelineOrchestrator:
             "detection",
             "tracking",
         ]
-        if self.alignment_stage:
-            stages.append("alignment")
         if self.recognition_stage:
             stages.append("recognition")
         if self.attendance_stage:

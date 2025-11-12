@@ -1,5 +1,5 @@
 # Face Attendance System - Configuration File
-# Version 2.0 - Refactored with OOP and Design Patterns
+# Version 3.0 - Refactored with OOP and Design Patterns
 # All paths are relative to project root
 
 # =============================================================================
@@ -7,139 +7,152 @@
 # =============================================================================
 detector:
   # Detector type: 'yolo' (Ultralytics with TFLite backend)
-  # - 'yolo': Production-ready with integrated tracking support
   type: yolo
   
-  # Model path (relative to project root - now organized by type)
+  # Model path (relative to project root)
   model_path: models/detection/yolov8n_face_int8.tflite
   
   # Detection parameters
-  confidence_threshold: 0.5  # Minimum confidence for face detection [0.0-1.0]
-  iou_threshold: 0.3         # NMS IoU threshold [0.0-1.0]
-  input_size: 256            # Model input size (DO NOT change unless model retrained)
+  confidence_threshold: 0.5
+  iou_threshold: 0.3
+  input_size: 256
   
-  # TFLite-specific settings (only used when type='tflite')
+  # TFLite-specific settings
   tflite:
-    num_threads: 3           # CPU threads (3 for Pi, 4 for laptop)
-    delegate: null           # null, 'xnnpack', or 'edgetpu'
+    num_threads: 3
+    delegate: null
 
 # =============================================================================
 # TRACKER CONFIGURATION (Strategy Pattern)
 # =============================================================================
 tracker:
-  # Tracker type: 'botsort' or 'none' (for testing)
-  # - 'botsort': Best quality, handles occlusions well (recommended)
-  # - 'none': No tracking (testing only)
-  # - 'none': No tracking, just detection (for performance testing)
   type: botsort
   
   # Tracking parameters
-  track_thresh: 0.5          # Min confidence to start tracking [0.0-1.0] (increased from 0.4)
-  track_buffer: 120          # Frames to keep lost tracks alive (120 = ~4 sec @ 30fps, increased from 90)
-  match_thresh: 0.3          # IoU threshold for track matching [0.0-1.0] (decreased from 0.4 for better matching)
-  frame_rate: 30             # Expected camera frame rate
-  
-  # ⚠️ IMPORTANT: Track IDs are temporary and may swap between people!
-  # This is normal for tracking-only systems (no face recognition yet).
-  # To fix: Implement Phase 2 (Face Recognition) which maps Track IDs → Person Identity
+  track_thresh: 0.5
+  track_buffer: 120
+  match_thresh: 0.3
+  frame_rate: 30
 
 # =============================================================================
 # ALIGNER CONFIGURATION (Phase 2 - Face Alignment)
 # =============================================================================
 aligner:
-  # Aligner type: 'mediapipe' (currently only option)
-  # - 'mediapipe': 468-landmark Face Mesh alignment (CPU optimized)
   type: mediapipe
   
   # Alignment parameters
-  output_size: [112, 112]           # Output face size (width, height) for recognition
-  min_detection_confidence: 0.5     # Minimum confidence for landmark detection [0.0-1.0]
-  min_tracking_confidence: 0.5      # Minimum confidence for landmark tracking [0.0-1.0]
-  refine_landmarks: false           # Use attention mesh for iris landmarks (slower)
-  
-  # MediaPipe uses 5-point alignment:
-  # - Left eye (landmark 33), Right eye (landmark 263)
-  # - Nose tip (landmark 1)
-  # - Left mouth (landmark 61), Right mouth (landmark 291)
-  # These are warped to canonical positions for 112x112 output
+  output_size: [112, 112]
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+  refine_landmarks: false
 
 # =============================================================================
 # CAMERA CONFIGURATION
 # =============================================================================
 camera:
-  device_id: 1               # Camera device index (0=default, 1=secondary, etc.)
-  resolution:                # Camera resolution (null = use camera default)
+  device_id: 1
+  resolution:
     width: null
     height: null
-  fps: null                  # Camera FPS (null = use camera default)
+  fps: null
 
 # =============================================================================
 # DISPLAY CONFIGURATION
 # =============================================================================
 display:
-  show_window: true          # Show live video window
-  window_name: "Face Attendance System v2.0"
-  show_fps: true             # Display FPS counter
-  show_track_ids: true       # Show track IDs on faces
-  show_confidence: true      # Show confidence scores
+  show_window: true
+  window_name: "Face Attendance System v3.0"
+  show_fps: true
+  show_track_ids: true
+  show_confidence: true
   
   # Colors (BGR format)
-  bbox_color: [0, 255, 0]    # Bounding box color (green)
-  text_color: [0, 255, 0]    # Text color (green)
-  font_scale: 0.6            # Text size
-  thickness: 2               # Line thickness
+  bbox_color: [0, 255, 0]
+  text_color: [0, 255, 0]
+  font_scale: 0.6
+  thickness: 2
 
 # =============================================================================
 # PERFORMANCE CONFIGURATION
 # =============================================================================
 performance:
-  process_every_n_frames: 1  # Process every Nth frame (1=all, 2=skip every other)
-  max_fps: null              # Limit FPS (null=unlimited, useful for testing)
+  process_every_n_frames: 1
+  max_fps: null
 
 # =============================================================================
 # LOGGING CONFIGURATION
 # =============================================================================
 logging:
-  # Log level: 'DEBUG', 'INFO', 'WARNING', 'ERROR'
-  console_level: INFO        # Console output level
-  file_level: DEBUG          # File output level (more detailed)
-  
-  # Log directory (relative to project root)
+  console_level: INFO
+  file_level: DEBUG
   log_dir: production/logs
-  
-  # Stats interval (frames)
-  stats_interval: 50         # Print stats every N frames
+  stats_interval: 50
 
 # =============================================================================
 # EVENT SYSTEM CONFIGURATION (Observer Pattern)
 # =============================================================================
 events:
-  # Enable event system
   enabled: true
-  
-  # Event history size (for debugging)
   history_size: 100
   
-  # Subscribe to events (future use for attendance marking)
   subscriptions:
-    face_detected: true      # Log when new face detected
-    face_lost: true          # Log when track lost
-    face_recognized: false   # Not implemented yet
-    attendance_marked: false # Not implemented yet
+    face_detected: true
+    face_lost: true
+    face_recognized: false
+    attendance_marked: false
 
 # =============================================================================
-# FUTURE: RECOGNITION CONFIGURATION
+# RECOGNITION CONFIGURATION (Phase 3 - Face Recognition)
 # =============================================================================
 recognition:
-  enabled: false             # Not implemented yet
-  model_path: null
-  database_path: null
-  threshold: 0.6
+  enabled: true
+  
+  # Model configuration
+  model_type: auraface
+  model_path: models/recognition/auraface_resnet100_fp32.onnx
+  backbone: resnet100
+  embedding_size: 512
+  input_size: [112, 112]
+  
+  # Inference backend
+  backend: onnxruntime
+  device: cpu
+  num_threads: 4
+  
+  # Recognition parameters
+  similarity_threshold: 0.6
+  distance_metric: cosine
+  
+  # Quality-aware caching (Week 2)
+  enable_cache: true
+  quality_sampling_frames: 10
+  min_quality_threshold: 0.6
+  quality_improvement_delta: 0.1
+  cache_ttl_seconds: 300
+  
+  # Quality scoring weights (must sum to 1.0)
+  quality_weights:
+    sharpness: 0.30
+    brightness: 0.20
+    angle: 0.25
+    size: 0.15
+    confidence: 0.10
 
 # =============================================================================
-# FUTURE: ATTENDANCE CONFIGURATION
+# DATABASE CONFIGURATION (Phase 3C - Week 3)
+# =============================================================================
+database:
+  type: sqlite
+  path: data/faces.db
+  max_enrolled: 1000
+  max_faces_per_person: 5
+  enable_fuzzy_match: false
+
+# =============================================================================
+# ATTENDANCE CONFIGURATION (Phase 4)
 # =============================================================================
 attendance:
-  enabled: false             # Not implemented yet
-  database_path: null
+  enabled: false
+  database_path: data/attendance.db
   auto_mark: false
+  cooldown_minutes: 60

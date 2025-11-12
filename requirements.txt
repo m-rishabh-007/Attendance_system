@@ -43,6 +43,9 @@ tflite-runtime>=2.14.0
 # Ultralytics - YOLO utilities (NOT used for inference, only utilities)
 ultralytics>=8.0.0
 
+# ONNX Runtime - AuraFace FP32/INT8 inference + quantization tools
+onnxruntime>=1.16.0
+
 # PyYAML - Configuration file parsing
 PyYAML>=6.0
 

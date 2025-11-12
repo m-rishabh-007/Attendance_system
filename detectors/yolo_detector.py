@@ -8,19 +8,28 @@ Model: YOLOv8n INT8 TFLite (1.5MB)
 Performance: ~40-50ms inference on Raspberry Pi, ~20-30ms on laptop
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, TYPE_CHECKING
 from pathlib import Path
 import numpy as np
 import logging
 
 from common.base_classes import BaseFaceDetector, Detection
 
-try:
-    from ultralytics import YOLO
+if TYPE_CHECKING:
+    from ultralytics import YOLO  # type: ignore
     ULTRALYTICS_AVAILABLE = True
-except ImportError:
-    ULTRALYTICS_AVAILABLE = False
-    logging.warning("Ultralytics not available. YOLODetector will not work.")
+else:
+    try:
+        from ultralytics.yolo import YOLO  # type: ignore
+        ULTRALYTICS_AVAILABLE = True
+    except ImportError:
+        try:
+            from ultralytics import YOLO  # type: ignore
+            ULTRALYTICS_AVAILABLE = True
+        except ImportError:
+            ULTRALYTICS_AVAILABLE = False
+            YOLO = None  # type: ignore
+            logging.warning("Ultralytics not available. YOLODetector will not work.")
 
 
 class YOLODetector(BaseFaceDetector):
@@ -74,7 +83,7 @@ class YOLODetector(BaseFaceDetector):
             )
         
         self._logger = logging.getLogger('YOLODetector')
-        self.model = None
+        self.model: Any = None  # YOLO model instance
         
         # Configuration
         self.model_path = Path(config['model_path'])
@@ -103,7 +112,7 @@ class YOLODetector(BaseFaceDetector):
         self._logger.info(f"Loading YOLO model from {self.model_path}")
         
         try:
-            self.model = YOLO(self.model_path, task='detect')
+            self.model = YOLO(self.model_path, task='detect')  # type: ignore
             self._is_initialized = True
             self._logger.info("YOLO model loaded successfully")
         except Exception as e:
@@ -131,7 +140,7 @@ class YOLODetector(BaseFaceDetector):
             raise RuntimeError("Detector not initialized. Call initialize() first.")
         
         # Run YOLO inference (detection only, no tracking persistence)
-        results = self.model(
+        results = self.model(  # type: ignore
             frame,
             conf=self.confidence_threshold,
             iou=self.iou_threshold,
@@ -186,7 +195,7 @@ class YOLODetector(BaseFaceDetector):
             raise RuntimeError("Detector not initialized. Call initialize() first.")
         
         # Run YOLO with tracking (THIS IS THE KEY FIX!)
-        results = self.model.track(
+        results = self.model.track(  # type: ignore
             frame,
             persist=True,  # ✅ CRITICAL: Maintains track IDs across frames!
             conf=self.confidence_threshold,
@@ -207,7 +216,7 @@ class YOLODetector(BaseFaceDetector):
                 # Check if we have track IDs
                 has_track_ids = boxes.id is not None
                 
-                for i, box in enumerate(boxes):
+                for i, box in enumerate(boxes):  # type: ignore
                     # YOLO returns xyxy format, convert to tlwh
                     xyxy = box.xyxy[0].cpu().numpy()
                     x1, y1, x2, y2 = xyxy
@@ -222,9 +231,9 @@ class YOLODetector(BaseFaceDetector):
                     detections.append(detection)
                     
                     # Add track info if available
-                    if has_track_ids:
+                    if has_track_ids and boxes.id is not None:
                         from common.base_classes import Track
-                        track_id = int(boxes.id[i].item())
+                        track_id = int(boxes.id[i].item())  # type: ignore
                         track = Track(
                             track_id=track_id,
                             bbox=bbox,

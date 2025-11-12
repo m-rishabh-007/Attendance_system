@@ -95,22 +95,62 @@ See docs/DEVELOPER_GUIDE.md for complete documentation.
 
 ---
 
-### 🚧 Phase 3: Face Recognition (NEXT)
-**Status**: Planning Complete | Implementation Pending
+### ✅ Phase 3A: Face Recognition - Week 1 (COMPLETE)
+**Status**: FP32 Baseline Complete | November 8, 2025
 
-**Priority Features**:
-1. **ArcFace Recognition**: 512-dim embeddings (ONNX INT8)
-2. **Quality-Aware Caching**: Sample first 10 frames, use BEST quality
-3. **Pipeline Integration**: Orchestrator with caching layer
+**Delivered**:
+- ✅ BaseRecognizer abstract interface (367 lines, Strategy pattern)
+- ✅ AuraFaceRecognizer FP32 (368 lines, Apache 2.0 license)
+- ✅ RecognizerFactory (188 lines, config-driven)
+- ✅ QualityScorer (547 lines, 5 metrics)
+- ✅ RecognitionStage pipeline integration (410 lines, Facade pattern)
+- ✅ Comprehensive testing (16/16 tests passing)
+- ✅ Performance benchmarking (~4 FPS laptop, ~3.6 FPS Pi estimate)
 
-**Critical Design Decision**: Quality-aware caching prevents using blurry first frames:
-- Sample first 10 frames per track
-- Compute quality score (sharpness, brightness, angle, size, confidence)
-- Cache BEST quality alignment + embedding
-- Upgrade cache if better quality found
-- Result: 95%+ accuracy (vs 60% with naive caching)
+**Quality-Aware Sampling**:
+- 5 metrics: Sharpness (30%), Angle (25%), Brightness (20%), Size (15%), Confidence (10%)
+- Sample first 10 frames, cache BEST quality (Week 2)
+- Expected: 95%+ accuracy vs 60% with naive first-frame caching
 
-**See**: `docs/PHASE_3_IMPLEMENTATION_PLAN.md` for complete strategy
+**Performance Baseline**:
+- Laptop: 4.02 FPS mean (249ms/frame)
+- Pi 4 (estimated): 3.6 FPS (275ms/frame)
+- Week 2 target: 7 FPS with INT8 quantization
+
+**Architecture**: Clean separation of runtime (recognizers/) vs build-time (tools/quantization/)
+
+**See**: 
+- `docs/PHASE_3A_WEEK1_COMPLETE.md` - Complete Week 1 summary
+- `recognizers/README.md` - Module documentation
+- `tools/quantization/README.md` - Week 2 quantization workflow
+
+---
+
+### 🚧 Phase 3A: Week 2 - INT8 Quantization + Caching (NEXT)
+**Status**: Not Started | Target: November 15, 2025
+
+**Week 2 Objectives**:
+1. **INT8 Quantization** (Days 1-3):
+   - Collect 100 calibration faces
+   - Quantize FP32 → INT8 (auraface_resnet100_int8.onnx)
+   - Target: 2x speed improvement (90ms → 45ms)
+   - Validate: <1% accuracy drop
+
+2. **Quality-Aware Caching** (Days 4-5):
+   - Implement QualityAwareCache class
+   - Sample 10 frames per track_id
+   - Cache best quality embedding
+   - Target: 97% CPU reduction
+
+3. **Integration + Testing** (Days 6-7):
+   - End-to-end testing on Pi 4
+   - Performance benchmarking
+   - Week 2 completion report
+
+**Expected Results**:
+- FPS: 3.6 → 7 FPS on Pi (2x from INT8)
+- CPU savings: 97% (caching prevents redundant processing)
+- Accuracy: 95%+ (quality-aware caching)
 
 ---
 
@@ -211,4 +251,4 @@ Files: X lines of code"
 
 ---
 
-Last Updated: November 7, 2025 - Phase 2 Complete, Phase 3 Planned
+Last Updated: November 8, 2025 - Phase 3A Week 1 Complete (FP32 Baseline Recognition)
