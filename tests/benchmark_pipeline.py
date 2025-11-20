@@ -149,7 +149,7 @@ class PipelineBenchmark:
         
         if 'embeddings' in stats:
             logger.info(f"\nRecognition:")
-            logger.info(f"  Total embeddings: {int(stats['embeddings']['total'])}")
+            logger.info(f"  Faces with embeddings: {int(stats['embeddings']['total'])}")
             logger.info(f"  Avg per frame: {stats['embeddings']['mean_per_frame']:.2f}")
         
         # Recognition stage stats
@@ -162,7 +162,21 @@ class PipelineBenchmark:
             logger.info(f"  Recognitions success: {rec_stats['recognitions_success']}")
             logger.info(f"  Quality too low: {rec_stats['quality_too_low']}")
             
+            # Cache statistics
+            if 'cache_hits' in rec_stats:
+                cache_hits = rec_stats.get('cache_hits', 0)
+                cache_misses = rec_stats.get('cache_misses', 0)
+                total_cache_requests = cache_hits + cache_misses
+                
+                if total_cache_requests > 0:
+                    logger.info(f"\nCache Performance:")
+                    logger.info(f"  Cache hits: {cache_hits}")
+                    logger.info(f"  Cache misses: {cache_misses}")
+                    logger.info(f"  Hit rate: {rec_stats.get('cache_hit_rate', 0)*100:.1f}%")
+                    logger.info(f"  CPU reduction: {(cache_hits/total_cache_requests)*100:.1f}%")
+            
             if rec_stats['alignments_success'] > 0:
+                logger.info(f"\nTiming Details:")
                 logger.info(f"  Avg alignment time: {rec_stats['avg_alignment_time_ms']:.1f}ms")
             if rec_stats['recognitions_success'] > 0:
                 logger.info(f"  Avg recognition time: {rec_stats['avg_recognition_time_ms']:.1f}ms")

@@ -80,8 +80,10 @@ def check_model_keypoints():
     
     # Check keypoints shape
     shape = None
-    if hasattr(r.keypoints, "xyn") and r.keypoints.xyn is not None:
-        shape = tuple(r.keypoints.xyn.shape)
+    if r.keypoints is not None and hasattr(r.keypoints, "xyn"):
+        xyn_data = getattr(r.keypoints, "xyn", None)
+        if xyn_data is not None:
+            shape = tuple(xyn_data.shape)
     
     print(f"   ✅ Keypoints found!")
     print(f"   Shape: {shape}")
@@ -94,22 +96,24 @@ def check_model_keypoints():
     print(f"   Keypoints per face: {num_kpts}")
     
     # Show first face keypoints if available
-    if num_faces > 0 and num_kpts > 0:
+    if num_faces > 0 and num_kpts > 0 and r.keypoints is not None:
         print("\n6. First face keypoints (normalized [0..1] coordinates):")
         print("   Format: (x, y)")
-        kpts = r.keypoints.xyn[0]
-        
-        landmark_names = [
-            "Left eye",
-            "Right eye", 
-            "Nose tip",
-            "Left mouth corner",
-            "Right mouth corner"
-        ]
-        
-        for i, (x, y) in enumerate(kpts):
-            name = landmark_names[i] if i < len(landmark_names) else f"Point {i}"
-            print(f"   {name:20s}: ({x:.4f}, {y:.4f})")
+        xyn_data = getattr(r.keypoints, "xyn", None)
+        if xyn_data is not None:
+            kpts = xyn_data[0]
+            
+            landmark_names = [
+                "Left eye",
+                "Right eye", 
+                "Nose tip",
+                "Left mouth corner",
+                "Right mouth corner"
+            ]
+            
+            for i, (x, y) in enumerate(kpts):
+                name = landmark_names[i] if i < len(landmark_names) else f"Point {i}"
+                print(f"   {name:20s}: ({x:.4f}, {y:.4f})")
     
     print("\n" + "=" * 60)
     if num_kpts == 5:

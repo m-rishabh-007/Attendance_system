@@ -46,15 +46,17 @@ class TestPersistentTracking:
     
     def __init__(self):
         """Initialize test with configuration."""
-        self.config = ConfigManager.get_instance()
+        self.config = ConfigManager()
         self.config.load('config.yaml')
         
-        # Create detector
-        self.detector = YOLODetector(self.config.get_all())
+        # Create detector (pass detector section only)
+        detector_config = self.config.get_section('detector')
+        self.detector = YOLODetector(detector_config)
+        self.detector.initialize()
         
         # Test parameters
         self.num_test_frames = 100
-        self.camera_id = self.config.get('camera_id', 0)
+        self.camera_id = self.config.get('camera.device_id', 1)
         
         print("=" * 70)
         print("SMOKE TEST: Persistent Track ID Verification")
@@ -163,7 +165,7 @@ class TestPersistentTracking:
         print(f"  Frames processed: {self.num_test_frames}")
         print(f"  Frames with detection: {frames_with_detection}")
         print(f"  Detection rate: {detection_rate:.1f}%")
-        print(f"  Initial Track IDs: {sorted(first_frame_track_ids)}")
+        print(f"  Initial Track IDs: {sorted(first_frame_track_ids) if first_frame_track_ids else 'None'}")
         print(f"  All Track IDs seen: {sorted(all_track_ids_seen)}")
         print(f"  Unique Track IDs: {num_unique_ids}")
         

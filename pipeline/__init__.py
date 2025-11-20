@@ -13,6 +13,10 @@ Modules:
     attendance_stage: Stage 5 - Attendance marking (future)
 """
 
+from .orchestrator import PipelineOrchestrator
+from .detection_stage import DetectionStage
+from .tracking_stage import TrackingStage
+
 __version__ = '3.0.0'
 __all__ = [
     'PipelineOrchestrator',

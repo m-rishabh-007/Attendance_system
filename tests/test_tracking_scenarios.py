@@ -43,10 +43,10 @@ class TrackingScenarioTests:
     
     def __init__(self):
         """Initialize test suite."""
-        self.config = ConfigManager.get_instance()
+        self.config = ConfigManager()
         self.config.load('config.yaml')
         
-        self.camera_id = self.config.get('camera_id', 0)
+        self.camera_id = self.config.get('camera.device_id', 1)
         self.test_frames = 100
         
         print("=" * 70)
@@ -126,7 +126,8 @@ class TrackingScenarioTests:
         print("Please sit still in front of camera...")
         
         try:
-            detector = YOLODetector(self.config.get_all())
+            detector_config = self.config.get_section('detector')
+            detector = YOLODetector(detector_config)
             cap = self._open_camera()
             
             track_ids_per_frame = []
@@ -284,7 +285,8 @@ class TrackingScenarioTests:
         input()
         
         try:
-            detector = YOLODetector(self.config.get_all())
+            detector_config = self.config.get_section('detector')
+            detector = YOLODetector(detector_config)
             cap = self._open_camera()
             
             track_data = {}  # track_id -> [frame_numbers]

@@ -75,6 +75,10 @@ def test_with_stats():
         orchestrator.process_frame(frame)
     
     # Get stats
+    if orchestrator.recognition_stage is None:
+        logger.error("❌ Recognition stage is None - cannot get stats")
+        return False
+    
     stats = orchestrator.recognition_stage.get_stats()
     
     logger.info(f"Recognition Stats:")

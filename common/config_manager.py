@@ -146,6 +146,20 @@ class ConfigManager:
         
         return self._config[section]
     
+    def get_all(self) -> Dict[str, Any]:
+        """
+        Get entire configuration dictionary.
+        
+        Returns:
+            Complete configuration dictionary
+            
+        Raises:
+            ValueError: If configuration not loaded
+        """
+        if self._config is None:
+            raise ValueError("Configuration not loaded")
+        return self._config
+    
     def is_loaded(self) -> bool:
         """Check if configuration has been loaded."""
         return self._config is not None

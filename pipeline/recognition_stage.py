@@ -18,6 +18,7 @@ import numpy as np
 
 from aligners import AlignerFactory
 from recognizers import RecognizerFactory, QualityScorer
+from recognizers.quality_cache import QualityAwareCache
 
 
 class RecognitionStage:
@@ -85,6 +86,7 @@ class RecognitionStage:
         self.logger.info("Loading face recognizer...")
         recognition_config = config.get_section('recognition')
         self.recognizer = RecognizerFactory.create(recognition_config)
+        self.recognizer.load_model()  # CRITICAL: Load model before use!
         self.logger.info(f"✅ Recognizer: {self.recognizer.__class__.__name__}")
         self.logger.info(f"   Model: {recognition_config.get('model_path')}")
         self.logger.info(f"   Embedding size: {recognition_config.get('embedding_size')}")
@@ -106,10 +108,23 @@ class RecognitionStage:
         self.min_quality_threshold = recognition_config.get('min_quality_threshold', 0.6)
         self.enable_cache = recognition_config.get('enable_cache', False)
         
-        # Note: Caching not implemented yet (Week 2)
+        # Initialize quality-aware cache (Week 2)
         if self.enable_cache:
-            self.logger.warning("⚠️  Caching enabled in config but not yet implemented (Week 2)")
-            self.logger.warning("    All frames will be processed for now")
+            cache_config = recognition_config.get('cache', {})
+            ttl_seconds = cache_config.get('ttl_seconds', 300)
+            sample_size = cache_config.get('sample_size', 10)
+            upgrade_threshold = cache_config.get('upgrade_threshold', 0.1)
+            
+            self.cache = QualityAwareCache(
+                ttl_seconds=ttl_seconds,
+                sample_size=sample_size,
+                upgrade_threshold=upgrade_threshold
+            )
+            self.logger.info("✅ Quality-Aware Cache enabled")
+            self.logger.info(f"   TTL: {ttl_seconds}s, Sample size: {sample_size}, Upgrade threshold: {upgrade_threshold}")
+        else:
+            self.cache = None
+            self.logger.info("ℹ️  Cache disabled (processing all frames)")
         
         # Statistics
         self.stats = {
@@ -122,6 +137,8 @@ class RecognitionStage:
             'total_alignment_time_ms': 0.0,
             'total_quality_time_ms': 0.0,
             'total_recognition_time_ms': 0.0,
+            'cache_hits': 0,
+            'cache_misses': 0,
         }
         
         self.logger.info("="*60)
@@ -185,6 +202,8 @@ class RecognitionStage:
         embeddings_extracted = 0
         quality_too_low = 0
         quality_scores = []
+        cache_hits = 0
+        cache_misses = 0
         
         for track in tracks:
             self.stats['total_processed'] += 1
@@ -196,6 +215,25 @@ class RecognitionStage:
                 continue
             
             confidence = track.confidence if hasattr(track, 'confidence') else 0.0
+            
+            # 🔥 CACHE CHECK: Skip alignment + recognition if cached
+            if self.cache is not None:
+                cached_embedding = self.cache.get(track.track_id)
+                if cached_embedding is not None:
+                    track.embedding = cached_embedding
+                    track.embedding_extracted = True
+                    track.cached = True
+                    embeddings_extracted += 1
+                    cache_hits += 1
+                    self.stats['cache_hits'] += 1
+                    
+                    self.logger.debug(
+                        f"Track {track.track_id}: Cache HIT (skipping align+recognize)"
+                    )
+                    continue  # Skip to next track
+                else:
+                    cache_misses += 1
+                    self.stats['cache_misses'] += 1
             
             # Step 1: Align face
             t0 = time.time()
@@ -240,7 +278,12 @@ class RecognitionStage:
                     self.stats['recognitions_success'] += 1
                     track.embedding = embedding
                     track.embedding_extracted = True
+                    track.cached = False
                     embeddings_extracted += 1
+                    
+                    # 🔥 CACHE UPDATE: Store embedding with quality score
+                    if self.cache is not None:
+                        self.cache.put(track.track_id, embedding, quality_score)
                 else:
                     self.stats['recognitions_failed'] += 1
                     track.embedding_extracted = False
@@ -260,13 +303,26 @@ class RecognitionStage:
         # Calculate average quality
         avg_quality = np.mean(quality_scores) if quality_scores else 0.0
         
-        return {
+        # Calculate cache hit rate
+        cache_hit_rate = 0.0
+        if self.cache is not None and (cache_hits + cache_misses) > 0:
+            cache_hit_rate = cache_hits / (cache_hits + cache_misses)
+        
+        result = {
             'tracks_processed': len(tracks),
             'embeddings_extracted': embeddings_extracted,
             'quality_too_low': quality_too_low,
             'avg_quality': float(avg_quality),
             'processing_time_ms': processing_time_ms
         }
+        
+        # Add cache statistics if caching enabled
+        if self.cache is not None:
+            result['cache_hits'] = cache_hits
+            result['cache_misses'] = cache_misses
+            result['cache_hit_rate'] = cache_hit_rate
+        
+        return result
     
     def _get_bbox_from_track(self, track) -> Optional[Tuple[int, int, int, int]]:
         """
@@ -312,7 +368,7 @@ class RecognitionStage:
         
         Args:
             frame: Input frame (BGR format)
-            bbox: Bounding box (x, y, w, h)
+            bbox: Bounding box (x, y, w, h) format from tracker
         
         Returns:
             Tuple (aligned_face, angle):
@@ -320,11 +376,15 @@ class RecognitionStage:
             - angle: Face yaw angle in degrees, or None if failed
         """
         try:
-            result = self.aligner.align(frame, bbox)
-            if result is None:
+            # Convert bbox from (x,y,w,h) to (x1,y1,x2,y2) for aligner
+            x, y, w, h = bbox
+            bbox_xyxy = (x, y, x + w, y + h)
+            aligned_face = self.aligner.align(frame, bbox_xyxy)
+            if aligned_face is None:
                 return None, None
             
-            aligned_face, angle = result
+            # Get angle from aligner's last_angle attribute
+            angle = getattr(self.aligner, 'last_angle', None)
             return aligned_face, angle
         
         except Exception as e:
@@ -362,6 +422,8 @@ class RecognitionStage:
             - avg_alignment_time_ms: Average alignment time
             - avg_quality_time_ms: Average quality scoring time
             - avg_recognition_time_ms: Average recognition time
+            - cache_hits/misses: Cache performance (if enabled)
+            - cache_hit_rate: Percentage of cache hits (if enabled)
         """
         stats = self.stats.copy()
         
@@ -387,6 +449,16 @@ class RecognitionStage:
         else:
             stats['avg_recognition_time_ms'] = 0.0
         
+        # Add cache statistics if caching enabled
+        if self.cache is not None:
+            cache_stats = self.cache.get_stats()
+            stats['cache_hit_rate'] = cache_stats['hit_rate']
+            stats['cache_total_hits'] = cache_stats['hits']
+            stats['cache_total_misses'] = cache_stats['misses']
+            stats['cache_upgrades'] = cache_stats['upgrades']
+            stats['cache_evictions'] = cache_stats['evictions']
+            stats['cache_size'] = cache_stats['size']
+        
         return stats
     
     def reset_stats(self):
@@ -401,6 +473,8 @@ class RecognitionStage:
             'total_alignment_time_ms': 0.0,
             'total_quality_time_ms': 0.0,
             'total_recognition_time_ms': 0.0,
+            'cache_hits': 0,
+            'cache_misses': 0,
         }
     
     def __repr__(self) -> str:

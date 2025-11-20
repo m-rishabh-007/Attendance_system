@@ -26,14 +26,13 @@ This folder contains tools for INT8 quantization of face recognition models:
 ```
 tools/quantization/
 ├── README.md                           ✅ This file
-├── collect_calibration_data.py        ✅ Collect 100 samples (Week 2 Day 1 - COMPLETE)
-├── calibration_data_reader.py         ⏸️ Custom calibration reader (Week 2 Day 2)
-├── quantize_auraface.py               ⏸️ FP32 → INT8 converter (Week 2 Day 2-3)
-├── validate_quantized_model.py        ⏸️ Compare FP32 vs INT8 (Week 2 Day 4)
+├── collect_calibration_data.py        ✅ Collect 97 samples (Week 2 Day 1 - COMPLETE)
+├── convert_onnx_to_tflite.py          ✅ ONNX → TFLite FP32 (Week 2 Day 2)
+├── quantize_tflite_int8.py            ✅ TFLite FP32 → INT8 (Week 2 Day 3)
+├── validate_tflite_model.py           ✅ Compare FP32 vs INT8 (Week 2 Day 3)
 └── calibration_data/                  🚧 Generated during collection
-    ├── faces_100.npy                  📊 100 best calibration samples
-    ├── faces_validation.npy           📊 Extra samples for testing
-    ├── metadata.json                  📋 Quality scores, timestamps
+    ├── faces_100.npy                  📊 97 calibration samples (quality=0.327)
+    ├── metadata.json                  📋 Quality scores, angles, timestamps
     └── logs/                          📝 Collection session logs
         └── calibration_collection_*.log
 ```
@@ -42,13 +41,15 @@ tools/quantization/
 
 ## Week 2 Implementation Plan
 
-### Step 1: Collect Calibration Data ✅ COMPLETE
+### ✅ Day 1: Collect Calibration Data (COMPLETE)
 
-Script: `collect_calibration_data.py`
+**Script**: `collect_calibration_data.py`
+
+**Status**: ✅ 97 samples collected (quality=0.327)
 
 ```bash
-# Smart collection: 5 minutes, select best 100 from all collected
-python tools/quantization/collect_calibration_data.py
+# Smart collection: 5 minutes, best quality samples
+python3 tools/quantization/collect_calibration_data.py
 
 # Collection strategy:
 # - Runs for 5 minutes (or press 'q' to stop early)
@@ -93,57 +94,111 @@ python tools/quantization/collect_calibration_data.py
 
 **Purpose**: High-quality, diverse calibration set for accurate INT8 quantization.
 
-### Step 2: Custom Calibration Data Reader
+---
 
-File: `calibration_data_reader.py`
+### ✅ Day 2: Convert ONNX → TFLite FP32 (READY)
 
-```python
-# Custom reader for onnxruntime.quantization
-class FaceCalibrationReader:
-    def __init__(self, calibration_data_path):
-        self.data = np.load(calibration_data_path)
-        self.index = 0
-    
-    def get_next(self):
-        if self.index >= len(self.data):
-            return None
-        batch = self.data[self.index]
-        self.index += 1
-        return {'input': batch}
-```
+**Script**: `convert_onnx_to_tflite.py`
 
-**Purpose**: Required by `onnxruntime.quantization` (cannot use auraface library).
+**Purpose**: Convert ONNX model to TFLite FP32 format (first step for TFLite INT8)
 
-### Step 3: Quantize FP32 → INT8
-
-Script: `quantize_auraface.py`
+**Pipeline**: ONNX → TensorFlow SavedModel → TFLite FP32
 
 ```bash
-# Quantize AuraFace model
-python tools/quantization/quantize_auraface.py \
-    --model models/recognition/auraface_resnet100_fp32.onnx \
-    --calibration tools/quantization/calibration_data/faces.npy \
-    --output models/recognition/auraface_resnet100_int8.onnx
+# Convert ONNX to TFLite FP32
+python3 tools/quantization/convert_onnx_to_tflite.py
+
+# Input: models/recognition/auraface_resnet100_fp32.onnx (166 MB)
+# Output: models/recognition/auraface_resnet100_fp32.tflite (166 MB)
 ```
 
-**Purpose**: Convert FP32 model to INT8 for 2x speedup.
+**What happens**:
+1. Loads ONNX model and validates structure
+2. Converts ONNX → TensorFlow SavedModel (using onnx-tf)
+3. Converts SavedModel → TFLite FP32 (using TFLite converter)
+4. Validates TFLite model with test inference
+5. Saves TFLite FP32 model (same size as ONNX, no quantization yet)
 
-### Step 4: Validate INT8 Model
+**Expected time**: ~2-3 minutes
 
-Script: `validate_quantized_model.py`
+---
+
+### ✅ Day 3: Quantize TFLite FP32 → INT8 (READY)
+
+**Script**: `quantize_tflite_int8.py`
+
+**Purpose**: Post-training quantization FP32 → INT8 using calibration data
+
+**Pipeline**: TFLite FP32 + Calibration Data → TFLite INT8
 
 ```bash
-# Compare FP32 vs INT8 accuracy
-python tools/quantization/validate_quantized_model.py \
-    --fp32_model models/recognition/auraface_resnet100_fp32.onnx \
-    --int8_model models/recognition/auraface_resnet100_int8.onnx \
-    --test_data data/validation/
+# Quantize TFLite FP32 to INT8
+python3 tools/quantization/quantize_tflite_int8.py
+
+# Input: 
+#   - models/recognition/auraface_resnet100_fp32.tflite (166 MB)
+#   - tools/quantization/calibration_data/faces_100.npy (97 samples)
+# Output:
+#   - models/recognition/auraface_resnet100_int8.tflite (~42 MB)
 ```
+
+**What happens**:
+1. Loads FP32 TFLite model
+2. Loads calibration dataset (97 face samples)
+3. Creates representative dataset generator
+4. Runs TFLite INT8 quantization with calibration
+5. Saves INT8 TFLite model (4x smaller)
+6. Validates INT8 model with test inference
 
 **Expected Results**:
-- Accuracy drop: <1% (99.83% → 99.5%+)
-- Speed improvement: 2x (80ms → 40ms on Pi)
-- Model size: 4x smaller (65MB → 16MB)
+- Size reduction: 166 MB → 42 MB (4x smaller)
+- Quantization: UINT8 for weights + activations
+- Speed improvement: 2x faster on Pi (tested in validation)
+
+**Expected time**: ~3-5 minutes
+
+---
+
+### ✅ Day 3: Validate INT8 Model (READY)
+
+**Script**: `validate_tflite_model.py`
+
+**Purpose**: Compare FP32 vs INT8 accuracy on validation dataset
+
+```bash
+# Validate INT8 model accuracy
+python3 tools/quantization/validate_tflite_model.py
+
+# Input:
+#   - models/recognition/auraface_resnet100_fp32.tflite
+#   - models/recognition/auraface_resnet100_int8.tflite
+#   - tools/quantization/calibration_data/faces_100.npy (validation)
+# Output:
+#   - tools/quantization/validation_report.json
+#   - Console report with metrics
+```
+
+**What happens**:
+1. Loads FP32 and INT8 TFLite models
+2. Runs inference on 97 validation samples
+3. Compares embeddings:
+   - Cosine similarity (target: >0.99)
+   - Mean Absolute Error (target: <0.05)
+4. Measures inference time (speedup)
+5. Generates validation report (JSON + console)
+
+**Pass Criteria**:
+- ✅ Cosine similarity ≥ 0.99 (embeddings nearly identical)
+- ✅ MAE ≤ 0.05 (low error)
+- ✅ Speedup ≥ 2x (INT8 faster than FP32)
+
+**Expected Results** (with quality=0.327 calibration data):
+- Cosine similarity: 0.96-0.98 (lower due to suboptimal calibration)
+- MAE: 0.06-0.10 (higher due to calibration quality)
+- Speedup: 2-3x faster
+- Accuracy drop: 3-5% (re-collect on Pi for <1%)
+
+**Expected time**: ~2-3 minutes
 
 ---
 

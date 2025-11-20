@@ -256,7 +256,7 @@ class CalibrationCollector:
         start_time = time.time()
         frame_count = 0
         last_sample_time = 0
-        sample_interval = 3.0  # Sample every 3 seconds (avoid duplicates)
+        sample_interval = 1.0  # Sample every 3 seconds (avoid duplicates)
         
         self.logger.debug(f"Collection started at {datetime.now()}")
         self.logger.debug(f"Sample interval: {sample_interval} seconds")

@@ -51,7 +51,7 @@ class DetectionStage:
         
         self.logger.info(f"✅ DetectionStage initialized with {self.detector}")
     
-    def process(self, frame) -> List[Dict[str, Any]]:
+    def process(self, frame) -> List:
         """
         Detect faces in frame.
         
@@ -63,10 +63,7 @@ class DetectionStage:
             frame: Input frame (BGR format, numpy array)
         
         Returns:
-            List of detections, each containing:
-                - bbox: [x, y, w, h]
-                - confidence: float
-                - class_id: int
+            List of Detection objects from the detector
         """
         return self.detector.detect(frame)
     
@@ -84,8 +81,9 @@ class DetectionStage:
         Returns:
             Tuple of (detections, tracks) with persistent track IDs
         """
-        if hasattr(self.detector, 'detect_and_track'):
-            return self.detector.detect_and_track(frame, tracker_config)
+        # Type guard: Check if detector supports integrated tracking
+        if hasattr(self.detector, 'detect_and_track') and callable(getattr(self.detector, 'detect_and_track', None)):
+            return self.detector.detect_and_track(frame, tracker_config)  # type: ignore[attr-defined]
         else:
             # Fallback: detector doesn't support integrated tracking
             self.logger.warning(

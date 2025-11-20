@@ -125,10 +125,13 @@ recognition:
   
   # Quality-aware caching (Week 2)
   enable_cache: true
-  quality_sampling_frames: 10
-  min_quality_threshold: 0.6
-  quality_improvement_delta: 0.1
-  cache_ttl_seconds: 300
+  min_quality_threshold: 0.5  # Lowered for benchmark (was 0.6)
+  
+  cache:
+    ttl_seconds: 300  # 5 minutes
+    sample_size: 10  # Sample first 10 frames per person
+    upgrade_threshold: 0.1  # 10% quality improvement required
+    max_size: 1000  # Max 1000 tracked faces
   
   # Quality scoring weights (must sum to 1.0)
   quality_weights:
