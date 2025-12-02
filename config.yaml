@@ -1,25 +1,55 @@
 # Face Attendance System - Configuration File
-# Version 3.0 - Refactored with OOP and Design Patterns
+# Version 4.0 - Async Multiprocessing Pipeline with NCNN Support
 # All paths are relative to project root
+
+# =============================================================================
+# PIPELINE CONFIGURATION (Async Multiprocessing)
+# =============================================================================
+pipeline:
+  # Enable async multiprocessing (Producer-Consumer pattern)
+  async_mode: true
+  
+  # Leaky bucket queue size (max buffered faces)
+  # If worker is slow, frames are dropped (fail fast, camera keeps running)
+  face_queue_size: 5
+  
+  # Enable result annotations (show recognized names on frames)
+  enable_result_annotations: true
 
 # =============================================================================
 # DETECTOR CONFIGURATION (Factory Pattern)
 # =============================================================================
 detector:
-  # Detector type: 'yolo' (Ultralytics with TFLite backend)
+  # Detector type: 'yolo' (Ultralytics with multiple backend support)
   type: yolo
   
-  # Model path (relative to project root)
-  model_path: models/detection/yolov8n_face_int8.tflite
+  # --- RUNTIME SELECTION ---
+  # Choose runtime: 'tflite' | 'ncnn' | 'pt'
+  #
+  # TFLite (INT8): Good for initial testing (slower on Pi)
+  # NCNN (FP16): 2-3x faster on Pi 5 (recommended for production)
+  # PT (FP32): PyTorch format (testing only, slow on CPU)
+  runtime: ncnn
+  
+  # Model path (file for tflite/pt, folder for ncnn)
+  # TFLite: models/detection/yolov8n_face_int8.tflite
+  # NCNN: models/detection/yolov8n_ncnn_model
+  model_path: models/detection/yolov8n_ncnn_model
   
   # Detection parameters
   confidence_threshold: 0.5
   iou_threshold: 0.3
-  input_size: 256
   
-  # TFLite-specific settings
+  # Input size (320 recommended for NCNN on Pi 5)
+  # 256: Fastest but may miss distant faces
+  # 320: Sweet spot (30+ FPS on Pi 5 with NCNN)
+  # 416: Better accuracy, slower (~15-20 FPS)
+  # 640: Highest accuracy, too slow for real-time (~8-10 FPS)
+  input_size: 320
+  
+  # Legacy TFLite-specific settings (ignored by NCNN)
   tflite:
-    num_threads: 3
+    num_threads: 4
     delegate: null
 
 # =============================================================================

@@ -69,7 +69,8 @@ class YOLODetector(BaseFaceDetector):
         
         Args:
             config: Configuration dictionary containing:
-                - model_path: Path to YOLO TFLite model
+                - model_path: Path to YOLO model (TFLite file or NCNN folder)
+                - runtime: Model runtime ('tflite', 'ncnn', 'pt') (default: 'tflite')
                 - confidence_threshold: Minimum detection confidence (default: 0.5)
                 - iou_threshold: NMS IoU threshold (default: 0.3)
                 - input_size: Model input size (default: 256)
@@ -87,15 +88,23 @@ class YOLODetector(BaseFaceDetector):
         
         # Configuration
         self.model_path = Path(config['model_path'])
+        self.runtime = config.get('runtime', 'tflite')  # 'tflite', 'ncnn', or 'pt'
         self.confidence_threshold = config.get('confidence_threshold', 0.5)
         self.iou_threshold = config.get('iou_threshold', 0.3)
         self.input_size = config.get('input_size', 256)
         
-        if not self.model_path.exists():
-            raise FileNotFoundError(f"Model not found: {self.model_path}")
+        # Validate model path based on runtime
+        if self.runtime == 'ncnn':
+            # NCNN expects a folder
+            if not self.model_path.is_dir():
+                raise FileNotFoundError(f"NCNN model folder not found: {self.model_path}")
+        else:
+            # TFLite/PT expect a file
+            if not self.model_path.exists():
+                raise FileNotFoundError(f"Model not found: {self.model_path}")
         
         self._logger.info(
-            f"YOLODetector created (conf={self.confidence_threshold}, "
+            f"YOLODetector created (runtime={self.runtime}, conf={self.confidence_threshold}, "
             f"iou={self.iou_threshold}, size={self.input_size})"
         )
     
@@ -104,17 +113,37 @@ class YOLODetector(BaseFaceDetector):
         Load YOLO model.
         
         Called once before first detection to avoid redundant loading.
+        Supports multiple runtimes: TFLite, NCNN, PyTorch.
         """
         if self._is_initialized:
             self._logger.warning("Already initialized. Skipping.")
             return
         
-        self._logger.info(f"Loading YOLO model from {self.model_path}")
+        self._logger.info(f"Loading YOLO model from {self.model_path} (runtime: {self.runtime})")
         
         try:
-            self.model = YOLO(self.model_path, task='detect')  # type: ignore
+            # Load model based on runtime
+            if self.runtime == 'ncnn':
+                # NCNN: Pass folder path (Ultralytics handles NCNN loading automatically)
+                self.model = YOLO(str(self.model_path), task='detect')  # type: ignore
+                self._logger.info(f"✅ NCNN model loaded (FP16 optimized for ARM)")
+            elif self.runtime == 'pt':
+                # PyTorch: Standard .pt file
+                self.model = YOLO(str(self.model_path), task='detect')  # type: ignore
+                self._logger.info(f"✅ PyTorch model loaded")
+            else:
+                # TFLite: Default runtime
+                self.model = YOLO(str(self.model_path), task='detect')  # type: ignore
+                self._logger.info(f"✅ TFLite model loaded (INT8 quantized)")
+            
+            # Warmup inference (prevents first-frame lag)
+            self._logger.info("Warming up model...")
+            dummy_frame = np.zeros((self.input_size, self.input_size, 3), dtype=np.uint8)
+            _ = self.model(dummy_frame, verbose=False, imgsz=self.input_size)  # type: ignore
+            self._logger.info("✅ Model warmup complete")
+            
             self._is_initialized = True
-            self._logger.info("YOLO model loaded successfully")
+            
         except Exception as e:
             self._logger.error(f"Failed to load YOLO model: {e}")
             raise
