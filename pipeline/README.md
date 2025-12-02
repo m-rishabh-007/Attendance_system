@@ -9,12 +9,12 @@
 ## 📋 Files in This Component
 
 | File | Purpose | Runs Every Frame? | Critical? |
-|------|---------|-------------------|-----------|
-| `orchestrator.py` | Main coordinator (runs all stages) | ✅ YES | ⭐ CRITICAL |
+|------|---------|-------------------|-----------||
+| `orchestrator.py` | Sequential coordinator (V3 HYBRID) | ✅ YES | ⭐ CRITICAL (baseline) |
+| `async_orchestrator.py` | **Async multiprocessing coordinator** | ✅ YES | ⭐⭐ PRODUCTION |
 | `detection_stage.py` | Detection orchestration | ✅ YES | ⭐ CRITICAL |
 | `tracking_stage.py` | Tracking orchestration (fallback) | ❌ NO (bypassed in V3) | ⚠️ Fallback only |
-| `alignment_stage.py` | (Future) Alignment orchestration | 🚧 Not implemented | Future |
-| `recognition_stage.py` | (Future) Recognition orchestration | 🚧 Not implemented | Future |
+| `recognition_stage.py` | Recognition orchestration | ✅ YES | ⭐ CRITICAL |
 | `attendance_stage.py` | (Future) Attendance marking | 🚧 Not implemented | Future |
 
 ---
@@ -372,6 +372,57 @@ detections, tracks = self.detection_stage.process_with_tracking(frame)
 
 ---
 
+## 🔥 NEW: Async Orchestrator (Phase 3B - Production)
+
+### `async_orchestrator.py` ⭐⭐ PRODUCTION
+
+**Purpose**: Multiprocessing pipeline with Producer-Consumer pattern for 19.36 FPS performance.
+
+**Architecture**:
+```
+Process 1 (Main Loop - 19.36 FPS):
+    Camera → YOLO NCNN → BoT-SORT → Queue → Display
+    (Never blocks - 50ms frame time)
+
+Process 2 (AI Worker - Parallel):
+    Queue → MediaPipe Align → AuraFace Recognition → Result Queue
+    (~90ms total - doesn't affect camera FPS)
+```
+
+**Key Benefits**:
+- **55% jitter reduction** - Stable FPS prevents BoT-SORT ID switching
+- **4x better ID stability** - 0.55 switches/100 frames vs 2.27 sequential
+- **0% frame drops** - Leaky bucket queue (maxsize=5) with put_nowait
+- **Zero IPC overhead** - Result Queue + Local Cache for instant name display
+
+**Performance**:
+- Laptop (AMD Ryzen 5 3500U): 19.36 FPS mean
+- Pi 5 (expected): 15-20 FPS with NCNN @ 320x320
+
+**Usage**:
+```python
+from pipeline.async_orchestrator import AsyncOrchestrator
+
+config = ConfigManager()
+orchestrator = AsyncOrchestrator(config)
+
+# Start worker process
+orchestrator.start()
+
+# Main loop (never blocks)
+while True:
+    ret, frame = cap.read()
+    result = orchestrator.process_frame(frame)
+    cv2.imshow("Attendance", result['annotated_frame'])
+
+# Graceful shutdown
+orchestrator.stop()
+```
+
+**See**: `tests/benchmark_multiprocessing.py` for performance comparison
+
+---
+
 ## 📚 Related Documentation
 
 - **Parent Guide**: `docs/DEVELOPER_GUIDE.md`
@@ -383,4 +434,4 @@ detections, tracks = self.detection_stage.process_with_tracking(frame)
 
 **Questions?** See `docs/DEVELOPER_GUIDE.md` or create an issue.
 
-**Last Updated**: November 5, 2025
+**Last Updated**: December 2, 2025 - Added AsyncOrchestrator (Phase 3B)

@@ -50,6 +50,10 @@ models/*/.cache/
 *.pb
 saved_model/
 
+# NCNN models (large binary files - use Git LFS or re-export)
+models/detection/yolov8n_ncnn_model/*.bin
+models/detection/yolov8n_ncnn_model/*.param
+
 # Logs
 *.log
 logs/

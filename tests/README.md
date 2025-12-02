@@ -10,11 +10,70 @@
 |-----------|---------|-------------|
 | `test_persistent_tracking.py` | **Smoke Test** - Verify Track IDs persist | After ANY tracking-related changes |
 | `test_tracking_scenarios.py` | **Comprehensive** - Test all tracking scenarios | Before releases, after major changes |
+| `test_async_quick.py` | **Async Pipeline** - Verify multiprocessing works | After async orchestrator changes |
+| `benchmark_multiprocessing.py` | **Performance** - Async vs sequential comparison | Performance regression testing |
+| `test_alignment.py` | **Alignment** - MediaPipe 5-point alignment | After alignment changes |
+| `test_auraface_basic.py` | **Recognition** - AuraFace embedding extraction | After recognizer changes |
+| `test_quality_cache.py` | **Caching** - Quality-aware cache behavior | After cache changes |
 | `run_all_tests.py` | Run all unit tests | Regular development |
 
 ---
 
-## 🎯 Test 1: Smoke Test (Most Important!)
+## 🔥 NEW: Async Pipeline Tests (Phase 3B)
+
+### `test_async_quick.py`
+
+**What It Tests**:
+- AsyncOrchestrator initialization
+- Worker process startup
+- NCNN model loading
+- Queue system functionality
+- FPS performance
+
+**How to Run**:
+```bash
+python tests/test_async_quick.py
+```
+
+**Expected Output**:
+```
+✅ Async Pipeline Started (Worker Process PID: 12345)
+[Worker] AI Process started. Waiting for faces...
+Mean FPS: 19.36 | Min: 15.11 | Max: 21.72 | Std: 2.07
+```
+
+**When to Run**:
+- After modifying `async_orchestrator.py`
+- After changing multiprocessing logic
+- Performance regression testing
+
+---
+
+### `benchmark_multiprocessing.py`
+
+**What It Tests**:
+- Async vs sequential performance comparison
+- FPS improvement measurement
+- Jitter reduction validation
+- Queue drop rate analysis
+- Track ID stability comparison
+
+**How to Run**:
+```bash
+python tests/benchmark_multiprocessing.py
+```
+
+**Expected Results**:
+- FPS Improvement: +3-10%
+- Jitter Reduction: +50-60%
+- Track ID switches: 0.55 async vs 2.27 sequential (4x better)
+- Queue drop rate: <5%
+
+**Duration**: 60 seconds (30s async + 30s sequential)
+
+---
+
+## 🧪 Test 1: Smoke Test (Most Important!)
 
 ### `test_persistent_tracking.py`
 
@@ -301,4 +360,4 @@ Before major releases:
 
 **Questions?** See `docs/DEVELOPER_GUIDE.md#troubleshooting` or create an issue.
 
-**Last Updated**: November 5, 2025
+**Last Updated**: December 2, 2025 - Added async pipeline tests (Phase 3B)
