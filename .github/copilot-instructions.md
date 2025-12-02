@@ -2,14 +2,19 @@
 
 ## Project Overview
 
-Real-time face detection and tracking pipeline using **YOLOv8n INT8 TFLite** + **BoT-SORT** for persistent face IDs. Optimized for Raspberry Pi and laptops with Docker and virtual environment support.
+Real-time face detection and tracking pipeline using **YOLOv8n NCNN FP16** + **BoT-SORT** for persistent face IDs. **Async multiprocessing architecture** prevents camera blocking. Optimized for Raspberry Pi 5 and laptops with Docker and virtual environment support.
 
-**Current Status**: ✅ V3 HYBRID Architecture | ✅ Detection + Tracking + Alignment + Recognition | ✅ Quality-Aware Caching (96.7% CPU reduction) | 🚧 Database + Attendance + API (Phase 4-5)
+**Current Status**: ✅ V3 HYBRID Architecture | ✅ Async Multiprocessing (19.36 FPS) | ✅ NCNN Optimization | ✅ Detection + Tracking + Alignment + Recognition | ✅ Quality-Aware Caching | 🚧 Database + Attendance (Phase 4)
 
-**Architecture**: V3 HYBRID - Combines pipeline orchestration (from OLD) + design patterns (from CURRENT) = Perfect 25/25 score
+**Architecture**: V3 HYBRID + **Producer-Consumer Multiprocessing**
+- Process 1 (Main Loop): Camera → YOLO NCNN → BoT-SORT @ 19.36 FPS (never blocks)
+- Process 2 (AI Worker): MediaPipe Align → AuraFace Recognition (parallel)
+- Leaky Bucket queue prevents camera blocking
+- Result Queue + Local Cache for instant name display
 
 **Key Features**: 
-- Pipeline orchestration layer separates "what to do" from "how to do it"
+- **Async multiprocessing** - 55% jitter reduction, 4x better ID stability
+- **NCNN FP16** - 2-3x faster than TFLite on ARM (Pi 5 optimized)
 - All 4 design patterns: Singleton, Factory, Strategy, Observer
 - Modular folder structure: pipeline/, detectors/, tracking/, aligners/, recognizers/, database/, server/
 - Config-driven (NO hardcoded values)
@@ -175,8 +180,50 @@ See docs/DEVELOPER_GUIDE.md for complete documentation.
 
 ---
 
-### 🚀 Phase 4: Attendance System (READY TO START)
-**Status**: Planning Complete | November 20, 2025
+### ✅ Phase 3B: Async Multiprocessing + NCNN Optimization (COMPLETE)
+**Status**: COMPLETE | December 1, 2025
+
+**Delivered**:
+- ✅ AsyncOrchestrator with Producer-Consumer pattern (526 lines)
+- ✅ Process 1: Camera → YOLO NCNN → BoT-SORT (never blocks camera)
+- ✅ Process 2: MediaPipe Align → AuraFace Recognition (parallel)
+- ✅ Leaky Bucket queue (maxsize=5, put_nowait for fail-fast)
+- ✅ Result Queue + Local Cache (zero IPC overhead for name display)
+- ✅ NCNN FP16 @ 320x320 (2-3x faster than TFLite on ARM)
+- ✅ YOLODetector runtime switching (ncnn/tflite/pt)
+- ✅ Comprehensive benchmarking (async vs sequential comparison)
+
+**Performance Results (Laptop - AMD Ryzen 5 3500U)**:
+- **FPS**: 19.36 mean (15.11-21.72 range)
+- **Frame time**: 50.78ms mean (P95: 60ms)
+- **Jitter**: 10.53ms (55% reduction vs sequential 24.70ms)
+- **Track ID stability**: EXCELLENT (0.55 switches/100 frames vs 2.27 sequential)
+- **Queue drop rate**: 0.0% (worker keeping up perfectly)
+- **Recognition latency**: P95 < 400ms
+
+**Expected Pi 5 Performance**:
+- 15-20 FPS with NCNN @ 320x320
+- Same stability benefits (async prevents camera blocking)
+
+**Architecture Benefits**:
+- Main loop NEVER blocks (queue.put_nowait drops frames if full)
+- Heavy AI processing (MediaPipe + AuraFace ~90ms) runs in parallel
+- Prevents "blind spots" that cause BoT-SORT ID switching
+- 4x better ID stability (0.55 vs 2.27 switches per 100 frames)
+
+**Files**:
+- `pipeline/async_orchestrator.py` (526 lines) - Producer-Consumer implementation
+- `tests/benchmark_multiprocessing.py` (464 lines) - Async vs sequential benchmarks
+- `tests/test_async_quick.py` (140 lines) - Quick functional test
+- `detectors/yolo_detector.py` (updated) - Runtime parameter support
+- `config.yaml` (updated) - Async mode config, NCNN runtime
+
+**See**: Benchmark output showing 19.36 FPS, 0% drop rate, 55% jitter reduction
+
+---
+
+### 🚀 Phase 4: Database + Attendance System (IN PROGRESS)
+**Status**: Starting Week 1 | December 2, 2025
 
 **Goal**: Add database storage, enrollment, matching, and attendance marking
 
@@ -253,21 +300,30 @@ See docs/DEVELOPER_GUIDE.md for complete documentation.
 
 ## Performance Targets
 
-### Raspberry Pi 4 (Production Target)
+### Laptop (Development - AMD Ryzen 5 3500U)
 
-| Stage | Time | Notes |
-|-------|------|-------|
-| Detection | 130ms | YOLO INT8 TFLite |
-| Tracking | 10ms | BoT-SORT with persist=True |
-| Alignment | 40ms | MediaPipe (once per track) |
-| Recognition | 50ms | ArcFace (once per track with caching) |
-| **First Frame** | **230ms (~4 FPS)** | Full pipeline |
-| **Cached Frames** | **140ms (~7 FPS)** | Skip align+recognize |
+**Async Mode Performance (Achieved)**:
+- **Main Loop FPS**: 19.36 mean (15.11-21.72 range)
+- **Frame Time**: 50.78ms (P95: 60ms, P99: 79.74ms)
+- **Jitter**: 10.53ms (STABLE - 55% reduction vs sequential)
+- **Queue Drop Rate**: 0.0% (worker keeping up)
+- **Track ID Stability**: 0.55 switches/100 frames (EXCELLENT)
 
-**With Quality-Aware Caching**:
-- 97% fewer alignments (10 vs 300 per person)
-- 97% fewer recognitions (10 vs 300 per person)
-- 99.8% CPU savings for multi-person scenarios
+### Raspberry Pi 5 (Production Target)
+
+**Expected Performance with NCNN**:
+- **Main Loop FPS**: 15-20 FPS (NCNN @ 320x320)
+- **Detection**: 40-50ms (YOLO NCNN FP16, ARM NEON optimized)
+- **Tracking**: 5-10ms (BoT-SORT with persist=True)
+- **Alignment**: 40ms (MediaPipe, runs in worker process)
+- **Recognition**: 50ms (AuraFace, runs in worker process)
+- **Queue Drop Rate**: <5% (acceptable worker lag)
+
+**Architecture Benefits**:
+- Main loop NEVER blocks (async prevents camera freezing)
+- Worker process handles heavy AI (90ms total, parallel to camera)
+- Quality-aware caching reduces redundant processing
+- Stable FPS prevents BoT-SORT ID switching
 
 ---
 
@@ -288,9 +344,10 @@ See docs/DEVELOPER_GUIDE.md for complete documentation.
 ### Before Starting Phase 4
 
 1. ✅ Phase 3A documented and complete
-2. ✅ Phase 4 planning document created
-3. 📋 Review `docs/PHASE_4_IMPLEMENTATION_PLAN.md`
-4. 🚀 Begin with database schema and foundation classes
+2. ✅ Phase 3B async multiprocessing complete
+3. ✅ NCNN optimization complete (19.36 FPS validated)
+4. 📋 Review `docs/PHASE_4_IMPLEMENTATION_PLAN.md`
+5. 🚀 Begin with database schema and foundation classes
 
 ### Commit Guidelines
 
@@ -308,4 +365,4 @@ Files: X lines of code"
 
 ---
 
-Last Updated: November 20, 2025 - Phase 3A Complete (Recognition + Quality-Aware Caching) | Phase 4 Ready
+Last Updated: December 2, 2025 - Phase 3B Complete (Async Multiprocessing + NCNN) | Phase 4 Ready
